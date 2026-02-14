@@ -41,7 +41,7 @@ See https://agentskills.io/specification for the full specification."
 )]
 struct Cli {
     /// Set log level (error, warn, info, debug)
-    #[arg(short, long, value_name = "LEVEL", default_value = "warn")]
+    #[arg(short, long, value_name = "LEVEL", default_value = "info")]
     log_level: LevelFilter,
 
     #[command(subcommand)]

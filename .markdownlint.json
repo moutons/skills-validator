@@ -1,0 +1,10 @@
+{
+  "MD013": {
+    "line_length": 220,
+  },
+  "MD060": {
+    "enabled": false,
+    "style": "any",
+    "aligned_delimiter": false
+  }
+}

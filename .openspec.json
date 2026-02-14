@@ -1,0 +1,10 @@
+{
+  "name": "skills-validator",
+  "version": "0.1.0",
+  "skills": ["rust", "testing"],
+  "rules": ["../.agents/rust-rules.md", "../.agents/testing-rules.md"],
+  "structure": {
+    "src": "src",
+    "tests": "tests"
+  }
+}

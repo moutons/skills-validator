@@ -1,14 +1,11 @@
 name: CI
-
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
-
 env:
   CARGO_TERM_COLOR: always
-
 jobs:
   fmt:
     name: Format
@@ -16,10 +13,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Install Rust
+# zizmor: ignore[unpinned-uses]
         uses: dtolnay/rust-toolchain@v2
-
       - name: Cache Cargo
         uses: actions/cache@v4
         with:
@@ -32,32 +28,28 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-
       - name: Check formatting
         run: cargo fmt --check
-
+      - name: z
+        uses: dtolnay/rust-toolchain@v2
   markdown:
     name: Markdown
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Run markdownlint
         uses: DavidAnson/markdownlint-cli2-action@v14
         with:
           globs: '**/*.md'
-
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@v2
-
       - name: Cache Cargo
         uses: actions/cache@v4
         with:
@@ -70,20 +62,16 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-
       - name: Run clippy
         run: cargo clippy -- -D warnings
-
   test:
     name: Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@v2
-
       - name: Cache Cargo
         uses: actions/cache@v4
         with:
@@ -96,20 +84,16 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-
       - name: Run tests
         run: cargo test
-
   security:
     name: Security
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@v2
-
       - name: Cache Cargo
         uses: actions/cache@v4
         with:
@@ -122,15 +106,12 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-
       - name: Generate Cargo.lock
         run: cargo generate-lockfile
-
       - name: Run security audit
         uses: rustsec/audit-check@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -138,10 +119,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@v2
-
       - name: Cache Cargo
         uses: actions/cache@v4
         with:
@@ -154,10 +133,8 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-
       - name: Build release
         run: cargo build --release
-
   publish:
     name: Publish to crates.io
     runs-on: ubuntu-latest
@@ -166,10 +143,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Install Rust
         uses: dtolnay/rust-toolchain@v2
-
       - name: Cache Cargo
         uses: actions/cache@v4
         with:
@@ -182,6 +157,98 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-
       - name: Publish
         run: cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
+permissions: {}
+---
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+permissions: {}
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@v2
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      - name: Build release
+        run: cargo build --release
+      - name: Publish to crates.io
+        uses: katyo/publish-crates@v3
+        with:
+          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./target/release/skills-validator
+  fmt:
+    steps:
+      - name: z
+        uses: dtolnay/rust-toolchain@v2
+---
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+permissions: {}
+env:
+  CARGO_TERM_COLOR: always
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@v2
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+      - name: Build release
+        run: cargo build --release
+      - name: Publish to crates.io
+        uses: katyo/publish-crates@v3
+        with:
+          registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./target/release/skills-validator
+  fmt:
+    steps:
+      - name: z
+        uses: dtolnay/rust-toolchain@v2

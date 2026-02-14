@@ -11,6 +11,7 @@ ensure-ci:
   just test
   just security
   just markdown
+  just harden
   just build
   @echo "All CI checks passed!"
 
@@ -25,14 +26,20 @@ clippy:
 # Run tests
 test:
   cargo test
+  just harden
 
 # Run security audit
 security:
   cargo audit
+  just harden
 
 # Lint markdown files
 markdown:
   pnpx markdownlint-cli2 '**/*.md'
+
+# Harden GitHub workflows for security
+harden:
+  ./scripts/harden-workflows.sh
 
 # Build release
 build:
@@ -47,7 +54,7 @@ clean:
   cargo clean
 
 # Run all checks including doc tests
-full: fmt clippy test security markdown build
+full: fmt clippy test security markdown harden build
 
 # Install dependencies (if needed)
 deps:

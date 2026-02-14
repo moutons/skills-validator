@@ -1,5 +1,3 @@
-mod helpers;
-
 #[test]
 fn test_skill_properties_to_dict() {
     let props = skills_validator::models::SkillProperties {

@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Reference library for Agent Skills"
 license = "Apache-2.0"
+authors = ["moutons <sdmouton@gmail.com>"]
 repository = "https://github.com/agentskills/skills-validator"
 
 [lib]

@@ -1,10 +1,10 @@
 # Project AGENTS.md
 
-This is a Rust reimplementation of the [agentskills/skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref) Python library.
+This is a Rust reimplementation of the [agentskills/skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref) Python library with some improvements.
 
 ## Project Structure
 
-```
+```text
 src/
 ├── main.rs          # CLI entry point
 ├── cli.rs           # CLI commands
@@ -34,13 +34,14 @@ cargo clippy
 
 This implementation follows the Agent Skills specification:
 
-- **Official Spec**: https://agentskills.io/specification
-- **OpenCode Implementation**: https://opencode.ai/docs/skills/
-- **Claude Code Implementation**: https://code.claude.com/docs/en/skills
+- **Official Spec**: <https://agentskills.io/specification>
+- **OpenCode Implementation**: <https://opencode.ai/docs/skills/>
+- **Claude Code Implementation**: <https://code.claude.com/docs/en/skills>
 
 ### Skill Directory Structure
 
 A valid skill directory must contain:
+
 - `SKILL.md` (or `skill.md`) - Required file
 - Directory name must match the `name` field in frontmatter
 
@@ -83,11 +84,11 @@ Claude Code supports additional fields beyond the official spec. These will gene
 - `agent` - Which subagent type to use
 - `hooks` - Hooks scoped to skill lifecycle
 
-See https://code.claude.com/docs/en/skills for details.
+See <https://code.claude.com/docs/en/skills> for details.
 
 ### Name Validation Regex
 
-```
+```shell
 ^[a-z0-9]+(-[a-z0-9]+)*$
 ```
 

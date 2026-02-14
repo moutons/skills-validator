@@ -1,6 +1,6 @@
 # skills-validator
 
-This is a Rust reimplementation of the [agentskills/skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref) Python library.
+This is a Rust reimplementation of the [agentskills/skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref) Python library with some improvements.
 
 > **Note:** This library validates skills according to the Agent Skills specification, informed by the OpenCode and Claude Code implementations. Unknown fields will cause validation failures.
 
@@ -8,9 +8,9 @@ This is a Rust reimplementation of the [agentskills/skills-ref](https://github.c
 
 This implementation follows the Agent Skills specification:
 
-- **Official Spec**: https://agentskills.io/specification
-- **OpenCode Implementation**: https://opencode.ai/docs/skills/
-- **Claude Code Implementation**: https://code.claude.com/docs/en/skills
+- **Official Spec**: <https://agentskills.io/specification>
+- **OpenCode Implementation**: <https://opencode.ai/docs/skills/>
+- **Claude Code Implementation**: <https://code.claude.com/docs/en/skills>
 
 ## Installation
 
@@ -87,10 +87,10 @@ Warns when skill content is missing key directive words:
 
 | Keyword  | Guidance |
 | -------- | -------- |
-| `never`  | A well-written skill includes clear directives to NEVER do something and preferably ALWAYS do an alternative. See https://agentskills.io/what-are-skills |
-| `always` | A well-written skill includes clear directives to ALWAYS do something in certain circumstances. See https://agentskills.io/what-are-skills |
-| `when`   | A well-written skill contains 'when' statements to inform the agent of what conditions trigger certain behaviors. See https://code.claude.com/docs/en/skills |
-| `example`| A well-written skill contains examples to inform the agent of what to do in commonly encountered circumstances. See https://opencode.ai/docs/skills |
+| `never`  | A well-written skill includes clear directives to NEVER do something and preferably ALWAYS do an alternative. See <https://agentskills.io/what-are-skills> |
+| `always` | A well-written skill includes clear directives to ALWAYS do something in certain circumstances. See <https://agentskills.io/what-are-skills> |
+| `when`   | A well-written skill contains 'when' statements to inform the agent of what conditions trigger certain behaviors. See <https://code.claude.com/docs/en/skills> |
+| `example`| A well-written skill contains examples to inform the agent of what to do in commonly encountered circumstances. See <https://opencode.ai/docs/skills> |
 
 ### Claude Code Extensions
 
@@ -104,7 +104,7 @@ Claude Code supports additional fields beyond the official spec. These generate 
 - `agent` - Which subagent type to use
 - `hooks` - Hooks scoped to skill lifecycle
 
-See https://code.claude.com/docs/en/skills for details.
+See <https://code.claude.com/docs/en/skills> for details.
 
 ## Agent Prompt Integration
 
@@ -143,7 +143,7 @@ Script execution introduces security risks. Consider:
 - **Confirmation**: Ask users before running potentially dangerous operations
 - **Logging**: Record all script executions for auditing
 
-See https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#security-considerations for more details.
+See <https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#security-considerations> for more details.
 
 ## License
 

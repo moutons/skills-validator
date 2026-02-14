@@ -41,6 +41,12 @@ impl ValidationResult {
     }
 }
 
+impl Default for ValidationResult {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 fn validate_name(name: &str, skill_dir: Option<&Path>) -> ValidationResult {
     let mut result = ValidationResult::new();
 

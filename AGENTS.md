@@ -14,7 +14,6 @@ src/
 ├── validator.rs     # Skill validation logic
 └── prompt.rs        # XML prompt generation
 tests/               # Integration tests
-scripts/             # Helper scripts
 ```
 
 ## Tech Stack
@@ -103,15 +102,6 @@ skills-validator read-properties path/to/skill
 
 # Generate <available_skills> XML
 skills-validator to-prompt path/to/skill-a path/to/skill-b
-```
-
-## Pre-commit Validation
-
-Before committing changes to skills in this repository or updating skills in `~/.agents/skills/`, run:
-
-```bash
-# Validate all skills in a directory
-./scripts/validate-skills.sh ~/.agents/skills
 ```
 
 ## Notes

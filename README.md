@@ -1,8 +1,8 @@
 # skills-validator
 
-Reference library for Agent Skills - Rust implementation.
+This is a Rust reimplementation of the [agentskills/skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref) Python library.
 
-> **Note:** This library validates skills according to the Agent Skills specification. Unknown fields will cause validation failures.
+> **Note:** This library validates skills according to the Agent Skills specification, informed by the OpenCode and Claude Code implementations. Unknown fields will cause validation failures.
 
 ## Specification
 
@@ -22,7 +22,7 @@ cargo install --path .
 Or with specific version:
 
 ```bash
-cargo install --git https://github.com/agentskills/skills-validator.git --tag v0.1.0
+cargo install --git https://github.com/moutons/skills-validator.git --tag v0.1.0
 ```
 
 ## Usage
@@ -127,22 +127,15 @@ What this skill does and when to use it
 </available_skills>
 ```
 
-## Pre-commit Validation
-
-To validate skills automatically before commits:
+## Development
 
 ```bash
-cp scripts/validate-skills.sh .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
+cargo build --release
+cargo test
+cargo clippy
 ```
 
-Or run manually:
-
-```bash
-./scripts/validate-skills.sh ~/.agents/skills
-```
-
-## Security Considerations
+## Security Considerations When Building Skills
 
 Script execution introduces security risks. Consider:
 

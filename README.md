@@ -11,7 +11,6 @@ This implementation follows the Agent Skills specification:
 - **Official Spec**: https://agentskills.io/specification
 - **OpenCode Implementation**: https://opencode.ai/docs/skills/
 - **Claude Code Implementation**: https://code.claude.com/docs/en/skills
-- **Claude Implementation**: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview
 
 ## Installation
 

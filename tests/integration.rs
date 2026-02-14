@@ -247,13 +247,12 @@ mod validator_tests {
     }
 
     #[test]
-    #[ignore] // TODO: fix keyword validation
     fn test_validate_keyword_found() {
         let dir = TempDir::new().unwrap();
         let path = make_skill(
             &dir,
             "test-skill",
-            "---\nname: test-skill\ndescription: Test skill\nnever do this\n---\ncontent",
+            "---\nname: test-skill\ndescription: Test skill\n---\nnever do this in your responses",
         );
         let result = skills_validator::validator::validate(&path);
         assert!(result
@@ -263,10 +262,13 @@ mod validator_tests {
     }
 
     #[test]
-    #[ignore] // TODO: fix keyword validation
     fn test_validate_keyword_missing() {
         let dir = TempDir::new().unwrap();
-        let path = make_skill(&dir, "test-skill", "---\nname: test-skill\ndescription: Test skill\nsome content without keywords\n---\ncontent");
+        let path = make_skill(
+            &dir,
+            "test-skill",
+            "---\nname: test-skill\ndescription: Test skill\n---\nsome content without keywords",
+        );
         let result = skills_validator::validator::validate(&path);
         assert!(result
             .warnings

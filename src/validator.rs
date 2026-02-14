@@ -247,13 +247,10 @@ fn validate_content_keywords(body: &str) -> ValidationResult {
 
     for (keyword, guidance) in keywords {
         if body_lower.contains(keyword) {
-            result.warnings.push(format!(
-                "Good: Found '{}' in skill content. {}",
-                keyword, guidance
-            ));
+            log::debug!("Good: Found '{}' in skill content. {}", keyword, guidance);
         } else {
             result.warnings.push(format!(
-                "Warning: '{}' not found in skill content. {}",
+                "'{}' not found in skill content. {}",
                 keyword, guidance
             ));
         }

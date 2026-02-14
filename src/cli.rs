@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use log::LevelFilter;
 use std::path::Path;
 use std::process;
 
@@ -8,7 +9,7 @@ use crate::validator::validate;
 
 #[derive(Parser)]
 #[command(name = "skills-validator")]
-#[command(version = "0.1.0")]
+#[command(version = "0.1.2")]
 #[command(
     about = "Validate Agent Skills and generate prompt XML",
     long_about = "
@@ -27,12 +28,22 @@ EXAMPLES:
     skills-validator read-properties ~/.agents/skills/rust
     skills-validator to-prompt ~/.agents/skills/*
 
+LOG LEVELS:
+    error   - Show only errors
+    warn    - Show warnings and errors (default)
+    info    - Show informational messages and above
+    debug   - Show all messages including detailed debug info
+
 For pre-commit validation of all skills:
-    ./scripts/validate-skills.sh ~/.agents/skills
+    just ensure-ci
 
 See https://agentskills.io/specification for the full specification."
 )]
 struct Cli {
+    /// Set log level (error, warn, info, debug)
+    #[arg(short, long, value_name = "LEVEL", default_value = "warn")]
+    log_level: LevelFilter,
+
     #[command(subcommand)]
     command: Commands,
 }
@@ -76,24 +87,32 @@ enum Commands {
 pub fn run() {
     let cli = Cli::parse();
 
+    env_logger::Builder::new()
+        .filter_level(cli.log_level)
+        .format_timestamp_secs()
+        .init();
+
     match cli.command {
         Commands::Validate { path } => {
             let path = Path::new(&path);
             let result = validate(path);
 
             for warning in &result.warnings {
-                eprintln!("Warning: {}", warning);
+                log::warn!("{}", warning);
             }
 
             if result.errors.is_empty() {
                 if result.warnings.is_empty() {
+                    log::info!("Skill is valid");
                     println!("✓ Skill is valid");
                 } else {
+                    log::info!("Skill is valid (with warnings)");
                     println!("✓ Skill is valid (with warnings)");
                 }
                 process::exit(0);
             } else {
                 for error in &result.errors {
+                    log::error!("{}", error);
                     eprintln!("Error: {}", error);
                 }
                 process::exit(1);
@@ -103,16 +122,19 @@ pub fn run() {
             let path = Path::new(&path);
             match read_properties(path) {
                 Ok(props) => {
+                    log::debug!("Read properties from {:?}", path);
                     let yaml = serde_yaml::to_string(&props.to_dict()).unwrap();
                     print!("{}", yaml);
                 }
                 Err(e) => {
+                    log::error!("Failed to read properties: {}", e);
                     eprintln!("Error: {}", e);
                     process::exit(1);
                 }
             }
         }
         Commands::ToPrompt { paths } => {
+            log::debug!("Generating prompt for {} skills", paths.len());
             let refs: Vec<&str> = paths.iter().map(|s| s.as_str()).collect();
             let prompt = to_prompt(&refs);
             println!("{}", prompt);

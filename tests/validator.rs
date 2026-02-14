@@ -166,21 +166,6 @@ fn test_validate_claude_code_extension_warning() {
 }
 
 #[test]
-fn test_validate_keyword_found() {
-    let dir = TempDir::new().unwrap();
-    let path = make_skill(
-        &dir,
-        "test-skill",
-        "---\nname: test-skill\ndescription: Test skill\n---\nnever do this in your responses",
-    );
-    let result = skills_validator::validator::validate(&path);
-    assert!(result
-        .warnings
-        .iter()
-        .any(|w| w.contains("Good: Found 'never'")));
-}
-
-#[test]
 fn test_validate_keyword_missing() {
     let dir = TempDir::new().unwrap();
     let path = make_skill(
@@ -192,7 +177,7 @@ fn test_validate_keyword_missing() {
     assert!(result
         .warnings
         .iter()
-        .any(|w| w.contains("Warning: 'never' not found")));
+        .any(|w| w.contains("'never' not found")));
 }
 
 #[test]

@@ -58,6 +58,17 @@ pub fn parse_frontmatter(content: &str) -> Result<(serde_yaml::Value, String), S
     Ok((metadata, body))
 }
 
+pub fn parse_frontmatter_and_body(
+    content: &str,
+) -> Result<(serde_yaml::Mapping, String), SkillError> {
+    let (metadata, body) = parse_frontmatter(content)?;
+    let map = metadata
+        .as_mapping()
+        .cloned()
+        .ok_or_else(|| SkillError::ParseError("Invalid metadata format".to_string()))?;
+    Ok((map, body))
+}
+
 pub fn read_properties(skill_dir: &Path) -> Result<SkillProperties, SkillError> {
     let skill_md = find_skill_md(skill_dir)
         .ok_or_else(|| SkillError::ParseError(format!("SKILL.md not found in {:?}", skill_dir)))?;

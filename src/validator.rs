@@ -1,7 +1,7 @@
 use std::path::Path;
 use unicode_normalization::UnicodeNormalization;
 
-use crate::parser::{find_skill_md, parse_frontmatter};
+use crate::parser::{find_skill_md, parse_frontmatter_and_body};
 
 const MAX_SKILL_NAME_LENGTH: usize = 64;
 const MAX_DESCRIPTION_LENGTH: usize = 1024;
@@ -38,10 +38,6 @@ impl ValidationResult {
             errors: Vec::new(),
             warnings: Vec::new(),
         }
-    }
-
-    pub fn is_valid(&self) -> bool {
-        self.errors.is_empty()
     }
 }
 
@@ -219,6 +215,47 @@ pub fn validate_metadata(
     result
 }
 
+fn validate_content_keywords(body: &str) -> ValidationResult {
+    let mut result = ValidationResult::new();
+
+    let body_lower = body.to_lowercase();
+
+    let keywords = [
+        (
+            "never",
+            "A well-written skill includes clear directives to NEVER do something and preferably ALWAYS do an alternative. See https://agentskills.io/what-are-skills",
+        ),
+        (
+            "always",
+            "A well-written skill includes clear directives to ALWAYS do something in certain circumstances. See https://agentskills.io/what-are-skills",
+        ),
+        (
+            "when",
+            "A well-written skill contains 'when' statements to inform the agent of what conditions trigger certain behaviors. See https://code.claude.com/docs/en/skills",
+        ),
+        (
+            "example",
+            "A well-written skill contains examples to inform the agent of what to do in commonly encountered circumstances. See https://opencode.ai/docs/skills",
+        ),
+    ];
+
+    for (keyword, guidance) in keywords {
+        if body_lower.contains(keyword) {
+            result.warnings.push(format!(
+                "Good: Found '{}' in skill content. {}",
+                keyword, guidance
+            ));
+        } else {
+            result.warnings.push(format!(
+                "Warning: '{}' not found in skill content. {}",
+                keyword, guidance
+            ));
+        }
+    }
+
+    result
+}
+
 pub fn validate(skill_dir: &Path) -> ValidationResult {
     let skill_dir = skill_dir.to_path_buf();
     let mut result = ValidationResult::new();
@@ -248,12 +285,14 @@ pub fn validate(skill_dir: &Path) -> ValidationResult {
     let skill_md = skill_md.unwrap();
 
     match std::fs::read_to_string(&skill_md) {
-        Ok(content) => match parse_frontmatter(&content) {
-            Ok((metadata, _)) => {
-                let map = metadata.as_mapping().cloned().unwrap_or_default();
+        Ok(content) => match parse_frontmatter_and_body(&content) {
+            Ok((map, body)) => {
                 let validation_result = validate_metadata(&map, Some(&skill_dir));
                 result.errors = validation_result.errors;
                 result.warnings = validation_result.warnings;
+
+                let keyword_result = validate_content_keywords(&body);
+                result.warnings.extend(keyword_result.warnings);
             }
             Err(e) => result.errors.push(e.to_string()),
         },

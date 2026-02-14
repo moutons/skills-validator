@@ -40,9 +40,12 @@ use skills_validator::{validate, read_properties, to_prompt};
 
 fn main() {
     // Validate a skill directory
-    let problems = validate("my-skill");
-    if !problems.is_empty() {
-        println!("Validation errors: {:?}", problems);
+    let result = validate("my-skill");
+    if !result.errors.is_empty() {
+        println!("Validation errors: {:?}", result.errors);
+    }
+    for warning in &result.warnings {
+        println!("Warning: {}", warning);
     }
 
     // Read skill properties
@@ -92,6 +95,17 @@ Or add as a git hook:
 cp scripts/validate-skills.sh .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
+
+## Security Considerations
+
+Script execution introduces security risks. Consider:
+
+- **Sandboxing**: Run scripts in isolated environments
+- **Allowlisting**: Only execute scripts from trusted skills
+- **Confirmation**: Ask users before running potentially dangerous operations
+- **Logging**: Record all script executions for auditing
+
+See https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#security-considerations for more details.
 
 ## License
 

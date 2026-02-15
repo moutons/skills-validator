@@ -41,9 +41,6 @@ OUTPUT:
 
     Use --json for JSON-formatted log output to stderr
 
-For pre-commit validation of all skills:
-    just ensure-ci
-
 See https://agentskills.io/specification for the full specification."
 )]
 struct Cli {

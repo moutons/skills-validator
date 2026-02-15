@@ -22,13 +22,43 @@ tests/               # Integration tests
 - **YAML parsing**: serde_yaml
 - **HTML escaping**: html-escape
 
-## Building
+## Development Workflow
+
+### Just Recipes
+
+Use `just` recipes instead of raw tool commands:
 
 ```bash
-cargo build --release
-cargo test
-cargo clippy
+# Run all CI checks locally (REQUIRED before committing)
+just ensure-ci
+
+# Run tests during development
+just test
+
+# Run linting
+just clippy
+
+# Format code
+just fmt
+
+# Security audit
+just security
+
+# Full check (all of the above + markdown lint)
+just full
 ```
+
+### Before Committing
+
+**ALWAYS run `just ensure-ci` and fix any issues before committing work.**
+
+This runs: fmt, clippy, test, security audit, and markdown lint.
+
+### GitHub Actions
+
+- CI workflow: `.github/workflows/ci.yml`
+- Release workflow: `.github/workflows/release.yml`
+- Run `just harden` to add zizmor security ignore comments to workflows
 
 ## Specification References
 

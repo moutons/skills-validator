@@ -1,7 +1,8 @@
 # Justfile for skills-validator
 
-# Default recipe
-default: ensure-ci
+# Default recipe lists all recipes
+default:
+  just --list
 
 # Run all CI checks locally
 ensure-ci:
@@ -11,11 +12,11 @@ ensure-ci:
   just test
   just security
   just markdown
-  just harden
+  just workflows
   just build
   @echo "All CI checks passed!"
 
-# Check formatting
+# Check Rust formatting
 fmt:
   cargo fmt --check
 
@@ -26,20 +27,21 @@ clippy:
 # Run tests
 test:
   cargo test
-  just harden
+  just workflows
 
 # Run security audit
 security:
   cargo audit
-  just harden
 
 # Lint markdown files
 markdown:
   pnpx markdownlint-cli2 '**/*.md'
 
-# Harden GitHub workflows for security
-harden:
-  ./scripts/harden-workflows.sh
+# Lint, validate, and pin GitHub workflows
+workflows:
+  ./scripts/fix-rust-toolchain.sh
+  actionlint --verbose
+  pnpx pin-github-action --allow katyo/publish-crates ./.github/workflows
 
 # Build release
 build:
@@ -54,7 +56,7 @@ clean:
   cargo clean
 
 # Run all checks including doc tests
-full: fmt clippy test security markdown harden build
+full: fmt clippy test security markdown build
 
 # Install dependencies (if needed)
 deps:

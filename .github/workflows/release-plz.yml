@@ -20,7 +20,12 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-          persist-credentials: true
+          persist-credentials: false
+
+      - name: Configure git
+        run: |
+          git config --global --add safe.directory ${{ github.workspace }}
+          git fetch origin main:main
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -58,7 +63,12 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-          persist-credentials: true
+          persist-credentials: false
+
+      - name: Configure git
+        run: |
+          git config --global --add safe.directory ${{ github.workspace }}
+          git fetch origin main:main
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable

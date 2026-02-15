@@ -1,0 +1,12 @@
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "dtolnay/rust-toolchain": ref-pin
+  cache-poisoning:
+    ignore:
+      - ci.yml:34
+      - ci.yml:80
+      - ci.yml:110
+      - ci.yml:141
+      - ci.yml:177

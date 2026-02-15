@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use log::LevelFilter;
-use std::io::Write;
+use owo_colors::OwoColorize;
+use std::io::{IsTerminal, Write};
 use std::path::Path;
 use std::process;
 
@@ -100,12 +101,11 @@ struct LogFormatter {
 impl LogFormatter {
     fn new(use_json: bool) -> Self {
         Self {
-            use_colors: atty::is(atty::Stream::Stderr),
+            use_colors: std::io::stderr().is_terminal(),
             use_json,
         }
     }
 
-    #[allow(clippy::unnecessary_unwrap)]
     fn format(
         &self,
         buf: &mut env_logger::fmt::Formatter,
@@ -138,71 +138,18 @@ impl LogFormatter {
             let level = record.level();
             let args = record.args();
 
-            let (level_str, color) = match level {
-                log::Level::Error => ("ERROR", self.color_red()),
-                log::Level::Warn => ("WARN", self.color_yellow()),
-                log::Level::Info => ("INFO", self.color_green()),
-                log::Level::Debug => ("DEBUG", self.color_cyan()),
-                log::Level::Trace => ("TRACE", self.color_dim()),
-            };
-
-            if self.use_colors && color.is_some() {
-                writeln!(
-                    buf,
-                    "{} {} {} {} {} {}",
-                    self.color_dim().unwrap_or(""),
-                    timestamp,
-                    color.unwrap(),
-                    level_str,
-                    args,
-                    self.color_reset().unwrap_or("")
-                )
+            if self.use_colors {
+                let level_str = match level {
+                    log::Level::Error => format!("{}", "ERROR".red()),
+                    log::Level::Warn => format!("{}", "WARN".yellow()),
+                    log::Level::Info => format!("{}", "INFO".green()),
+                    log::Level::Debug => format!("{}", "DEBUG".cyan()),
+                    log::Level::Trace => format!("{}", "TRACE".dimmed()),
+                };
+                writeln!(buf, "{} {} {}", timestamp.dimmed(), level_str, args)
             } else {
-                writeln!(buf, "{} {} - {}", timestamp, level_str, args)
+                writeln!(buf, "{} {} - {}", timestamp, level, args)
             }
-        }
-    }
-
-    fn color_red(&self) -> Option<&'static str> {
-        if self.use_colors {
-            Some("\x1b[31m")
-        } else {
-            None
-        }
-    }
-    fn color_yellow(&self) -> Option<&'static str> {
-        if self.use_colors {
-            Some("\x1b[33m")
-        } else {
-            None
-        }
-    }
-    fn color_green(&self) -> Option<&'static str> {
-        if self.use_colors {
-            Some("\x1b[32m")
-        } else {
-            None
-        }
-    }
-    fn color_cyan(&self) -> Option<&'static str> {
-        if self.use_colors {
-            Some("\x1b[36m")
-        } else {
-            None
-        }
-    }
-    fn color_dim(&self) -> Option<&'static str> {
-        if self.use_colors {
-            Some("\x1b[2m")
-        } else {
-            None
-        }
-    }
-    fn color_reset(&self) -> Option<&'static str> {
-        if self.use_colors {
-            Some("\x1b[0m")
-        } else {
-            None
         }
     }
 }

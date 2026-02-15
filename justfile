@@ -39,9 +39,9 @@ markdown:
 
 # Lint, validate, and pin GitHub workflows
 workflows:
-  ./scripts/fix-rust-toolchain.sh
   actionlint --verbose
   pnpx pin-github-action --allow dtolnay/rust-toolchain ./.github/workflows
+  zizmor --config ./.github/zizmor.yml ./
 
 # Build release
 build:

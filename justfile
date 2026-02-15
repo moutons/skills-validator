@@ -41,7 +41,7 @@ markdown:
 workflows:
   ./scripts/fix-rust-toolchain.sh
   actionlint --verbose
-  pnpx pin-github-action --allow katyo/publish-crates ./.github/workflows
+  pnpx pin-github-action --allow dtolnay/rust-toolchain ./.github/workflows
 
 # Build release
 build:

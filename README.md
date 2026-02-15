@@ -21,7 +21,7 @@ cargo install --path .
 Or with specific version:
 
 ```bash
-cargo install --git https://github.com/moutons/skills-validator.git --tag v0.1.3
+cargo install --git https://github.com/moutons/skills-validator.git --tag v0.1.4
 ```
 
 ## Usage

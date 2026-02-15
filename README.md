@@ -1,5 +1,8 @@
 # skills-validator
 
+[![CI](https://github.com/moutons/skills-validator/actions/workflows/ci.yml/badge.svg)](https://github.com/moutons/skills-validator/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/moutons/skills-validator/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/moutons/skills-validator/actions/workflows/github-code-scanning/codeql)
+
 This is a Rust reimplementation of the [agentskills/skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref) Python library with some improvements.
 
 > **Note:** This library validates skills according to the Agent Skills specification, informed by the OpenCode and Claude Code implementations. Unknown fields will cause validation failures.
@@ -15,13 +18,13 @@ This implementation follows the Agent Skills specification and key implementatio
 ## Installation
 
 ```bash
-cargo install --path .
+cargo install --locked
 ```
 
-Or with specific version:
+Or from a specific version:
 
 ```bash
-cargo install --git https://github.com/moutons/skills-validator.git --tag v0.1.4
+cargo install --locked --git https://github.com/moutons/skills-validator.git --tag v0.1.7
 ```
 
 ## Usage

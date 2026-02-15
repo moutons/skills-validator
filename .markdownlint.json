@@ -7,5 +7,6 @@
     "enabled": false,
     "style": "any",
     "aligned_delimiter": false
-  }
+  },
+  "ignores": [".opencode/**"]
 }

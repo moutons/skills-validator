@@ -1,6 +1,6 @@
 # Project AGENTS.md
 
-This is a Rust reimplementation of the [agentskills/skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref) Python library with some improvements.
+This is a Rust reimplementation of the [agentskills/skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref) Python library with some valuable improvements.
 
 ## Project Structure
 
@@ -44,6 +44,9 @@ just fmt
 # Security audit
 just security
 
+# Applies GitHub workflow file linting and pinning (this may make changes to workflow files, and that's okay)
+just workflows
+
 # Full check (all of the above + markdown lint)
 just full
 ```
@@ -52,17 +55,23 @@ just full
 
 **ALWAYS run `just ensure-ci` and fix any issues before committing work.**
 
-This runs: fmt, clippy, test, security audit, and markdown lint.
+This runs: fmt, clippy, test, security audit, github workflow lint, and markdown lint.
 
 ### GitHub Actions
 
 - CI workflow: `.github/workflows/ci.yml`
 - Release workflow: `.github/workflows/release.yml`
-- Run `just harden` to add zizmor security ignore comments to workflows
+- Run `just workflows` to lint workflow files, ensure `dtolnay/rust-toolchain` is using `stable`, and all other workflows are pinned to git hashes
+- When we need to know the most recent version of a GitHub action (to upgrade or fix issues in workflow files), run `gh release view`, see this example for usage:
+
+```shell
+❯ gh release view --repo katyo/publish-crates --json tagName --jq '.tagName'
+v2
+```
 
 ## Specification References
 
-This implementation follows the Agent Skills specification:
+This implementation follows the Agent Skills specification and key implementations, see their documentation:
 
 - **Official Spec**: <https://agentskills.io/specification>
 - **OpenCode Implementation**: <https://opencode.ai/docs/skills/>
@@ -116,7 +125,7 @@ Claude Code supports additional fields beyond the official spec. These will gene
 
 See <https://code.claude.com/docs/en/skills> for details.
 
-### Name Validation Regex
+### Skill Name Validation Regex
 
 ```shell
 ^[a-z0-9]+(-[a-z0-9]+)*$

@@ -6,7 +6,7 @@ This is a Rust reimplementation of the [agentskills/skills-ref](https://github.c
 
 ## Specification
 
-This implementation follows the Agent Skills specification:
+This implementation follows the Agent Skills specification and key implementations, see their documentation:
 
 - **Official Spec**: <https://agentskills.io/specification>
 - **OpenCode Implementation**: <https://opencode.ai/docs/skills/>
@@ -21,7 +21,7 @@ cargo install --path .
 Or with specific version:
 
 ```bash
-cargo install --git https://github.com/moutons/skills-validator.git --tag v0.1.0
+cargo install --git https://github.com/moutons/skills-validator.git --tag v0.1.3
 ```
 
 ## Usage

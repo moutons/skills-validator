@@ -35,7 +35,7 @@ security:
 
 # Lint markdown files
 markdown:
-  pnpx markdownlint-cli2 '**/*.md'
+  pnpx markdownlint-cli2 '**/*.md' '!node_modules/' '!.opencode/'
 
 # Lint, validate, and pin GitHub workflows
 workflows:

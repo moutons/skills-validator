@@ -174,12 +174,28 @@ pub fn run() {
             let path = Path::new(&path);
             let result = validate(path);
 
+            // When --json is passed, output result as JSON to stderr
+            if cli.json {
+                let json_result = serde_json::json!({
+                    "valid": result.errors.is_empty(),
+                    "errors": result.errors,
+                    "warnings": result.warnings
+                });
+                eprintln!("{}", json_result);
+
+                if result.errors.is_empty() {
+                    process::exit(0);
+                } else {
+                    process::exit(1);
+                }
+            }
+
+            // Text output mode
             for warning in &result.warnings {
                 log::warn!("{}", warning);
             }
 
             if result.errors.is_empty() {
-                // Validation result goes to stdout (data)
                 if result.warnings.is_empty() {
                     println!("✓ Skill is valid");
                 } else {
@@ -187,7 +203,6 @@ pub fn run() {
                 }
                 process::exit(0);
             } else {
-                // Errors go to stderr
                 for error in &result.errors {
                     log::error!("{}", error);
                 }

@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 use log::LevelFilter;
+use std::io::Write;
 use std::path::Path;
 use std::process;
 
@@ -34,6 +35,12 @@ LOG LEVELS:
     info    - Show informational messages and above
     debug   - Show all messages including detailed debug info
 
+OUTPUT:
+    stdout  - Data/results (validation results, YAML, XML)
+    stderr  - All log messages (INFO, WARN, DEBUG, errors)
+
+    Use --json for JSON-formatted log output to stderr
+
 For pre-commit validation of all skills:
     just ensure-ci
 
@@ -43,6 +50,10 @@ struct Cli {
     /// Set log level (error, warn, info, debug)
     #[arg(short, long, value_name = "LEVEL", default_value = "info")]
     log_level: LevelFilter,
+
+    /// Output logs as JSON to stderr
+    #[arg(long)]
+    json: bool,
 
     #[command(subcommand)]
     command: Commands,
@@ -84,13 +95,135 @@ enum Commands {
     },
 }
 
+struct LogFormatter {
+    use_colors: bool,
+    use_json: bool,
+}
+
+impl LogFormatter {
+    fn new(use_json: bool) -> Self {
+        Self {
+            use_colors: atty::is(atty::Stream::Stderr),
+            use_json,
+        }
+    }
+
+    #[allow(clippy::unnecessary_unwrap)]
+    fn format(
+        &self,
+        buf: &mut env_logger::fmt::Formatter,
+        record: &log::Record,
+    ) -> std::io::Result<()> {
+        if self.use_json {
+            let timestamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_secs_f64())
+                .unwrap_or(0.0);
+            let level = record.level();
+            let target = record.target();
+            let args = record.args();
+            writeln!(
+                buf,
+                r#"{{"time":{},"level":"{}","target":"{}","message":"{}"}}"#,
+                timestamp, level, target, args
+            )
+        } else {
+            let timestamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| {
+                    let secs = d.as_secs();
+                    let hours = (secs / 3600) % 24;
+                    let mins = (secs / 60) % 60;
+                    let s = secs % 60;
+                    format!("{:02}:{:02}:{:02}", hours, mins, s)
+                })
+                .unwrap_or_else(|_| "00:00:00".to_string());
+            let level = record.level();
+            let args = record.args();
+
+            let (level_str, color) = match level {
+                log::Level::Error => ("ERROR", self.color_red()),
+                log::Level::Warn => ("WARN", self.color_yellow()),
+                log::Level::Info => ("INFO", self.color_green()),
+                log::Level::Debug => ("DEBUG", self.color_cyan()),
+                log::Level::Trace => ("TRACE", self.color_dim()),
+            };
+
+            if self.use_colors && color.is_some() {
+                writeln!(
+                    buf,
+                    "{} {} {} {} {} {}",
+                    self.color_dim().unwrap_or(""),
+                    timestamp,
+                    color.unwrap(),
+                    level_str,
+                    args,
+                    self.color_reset().unwrap_or("")
+                )
+            } else {
+                writeln!(buf, "{} {} - {}", timestamp, level_str, args)
+            }
+        }
+    }
+
+    fn color_red(&self) -> Option<&'static str> {
+        if self.use_colors {
+            Some("\x1b[31m")
+        } else {
+            None
+        }
+    }
+    fn color_yellow(&self) -> Option<&'static str> {
+        if self.use_colors {
+            Some("\x1b[33m")
+        } else {
+            None
+        }
+    }
+    fn color_green(&self) -> Option<&'static str> {
+        if self.use_colors {
+            Some("\x1b[32m")
+        } else {
+            None
+        }
+    }
+    fn color_cyan(&self) -> Option<&'static str> {
+        if self.use_colors {
+            Some("\x1b[36m")
+        } else {
+            None
+        }
+    }
+    fn color_dim(&self) -> Option<&'static str> {
+        if self.use_colors {
+            Some("\x1b[2m")
+        } else {
+            None
+        }
+    }
+    fn color_reset(&self) -> Option<&'static str> {
+        if self.use_colors {
+            Some("\x1b[0m")
+        } else {
+            None
+        }
+    }
+}
+
+fn init_logger(level: LevelFilter, use_json: bool) {
+    let formatter = LogFormatter::new(use_json);
+
+    env_logger::Builder::new()
+        .filter_level(level)
+        .format(move |buf, record| formatter.format(buf, record))
+        .init();
+}
+
 pub fn run() {
     let cli = Cli::parse();
 
-    env_logger::Builder::new()
-        .filter_level(cli.log_level)
-        .format_timestamp_secs()
-        .init();
+    // Initialize logger - all logs go to stderr
+    init_logger(cli.log_level, cli.json);
 
     match cli.command {
         Commands::Validate { path } => {
@@ -102,18 +235,17 @@ pub fn run() {
             }
 
             if result.errors.is_empty() {
+                // Validation result goes to stdout (data)
                 if result.warnings.is_empty() {
-                    log::info!("Skill is valid");
                     println!("✓ Skill is valid");
                 } else {
-                    log::info!("Skill is valid (with warnings)");
                     println!("✓ Skill is valid (with warnings)");
                 }
                 process::exit(0);
             } else {
+                // Errors go to stderr
                 for error in &result.errors {
                     log::error!("{}", error);
-                    eprintln!("Error: {}", error);
                 }
                 process::exit(1);
             }
@@ -124,11 +256,11 @@ pub fn run() {
                 Ok(props) => {
                     log::debug!("Read properties from {:?}", path);
                     let yaml = serde_yaml::to_string(&props.to_dict()).unwrap();
+                    // YAML output goes to stdout (data)
                     print!("{}", yaml);
                 }
                 Err(e) => {
                     log::error!("Failed to read properties: {}", e);
-                    eprintln!("Error: {}", e);
                     process::exit(1);
                 }
             }
@@ -137,6 +269,7 @@ pub fn run() {
             log::debug!("Generating prompt for {} skills", paths.len());
             let refs: Vec<&str> = paths.iter().map(|s| s.as_str()).collect();
             let prompt = to_prompt(&refs);
+            // XML output goes to stdout (data)
             println!("{}", prompt);
         }
     }

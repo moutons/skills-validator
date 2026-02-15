@@ -22,7 +22,6 @@ jobs:
           persist-credentials: false
 
       - name: Install Rust toolchain
-        # zizmor: ignore[unpinned-uses]
         uses: dtolnay/rust-toolchain@stable
       # Generating a GitHub token, so that PRs and tags created by
       # the release-plz-action can trigger actions workflows.
@@ -57,10 +56,9 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Install Rust toolchain
-        # zizmor: ignore[unpinned-uses]
         uses: dtolnay/rust-toolchain@stable
 
       - name: Run release-plz

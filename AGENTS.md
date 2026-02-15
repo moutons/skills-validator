@@ -57,6 +57,29 @@ just full
 
 This runs: fmt, clippy, test, security audit, github workflow lint, and markdown lint.
 
+### Branching Strategy
+
+Use a local `develop` branch for long-lived work:
+
+```bash
+# Initial setup (once)
+git fetch github
+git checkout --track github/main
+git checkout -b develop
+
+# Start new work
+git checkout develop
+git fetch github
+git merge github/main
+
+# Work on features, commit frequently...
+git push -u github develop
+
+# When ready, create PR from github/develop -> github main
+```
+
+**Pull from `github/main` before starting work and frequently while working** to stay current with the main branch.
+
 ### GitHub Actions
 
 - CI workflow: `.github/workflows/ci.yml`

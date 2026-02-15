@@ -10,3 +10,6 @@ rules:
       - ci.yml:110
       - ci.yml:141
       - ci.yml:177
+  dangerous-triggers:
+    ignore:
+      - release-plz.yml

@@ -1,12 +1,7 @@
 {
+  "gitignore": true,
   "MD013": {
     "line_length": 250,
     "code_blocks": false
-  },
-  "MD060": {
-    "enabled": false,
-    "style": "any",
-    "aligned_delimiter": false
-  },
-  "ignores": [".opencode/**"]
+  }
 }

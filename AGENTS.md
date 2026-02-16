@@ -24,73 +24,31 @@ tests/               # Integration tests
 
 ## Development Workflow
 
-### Just Recipes
+See [.agents/rust-rules.md](.agents/rust-rules.md) for Rust-specific conventions.
 
-Use `just` recipes instead of raw tool commands:
+Project-specific just recipes:
 
 ```bash
 # Run all CI checks locally (REQUIRED before committing)
 just ensure-ci
 
-# Run tests during development
-just test
-
-# Run linting
-just clippy
-
-# Format code
-just fmt
-
-# Security audit
-just security
-
-# Applies GitHub workflow file linting and pinning (this may make changes to workflow files, and that's okay)
-just workflows
-
 # Full check (all of the above + markdown lint)
 just full
 ```
 
-### Before Committing
+## Before Committing
+
+See [.agents/git-workflow.md](.agents/git-workflow.md) and [.agents/markdown-rules.md](.agents/markdown-rules.md).
 
 **ALWAYS run `just ensure-ci` and fix any issues before committing work.**
 
-This runs: fmt, clippy, test, security audit, github workflow lint, and markdown lint.
-
-### Branching Strategy
-
-Use a local `develop` branch for long-lived work:
-
-```bash
-# Initial setup (once)
-git fetch github
-git checkout --track github/main
-git checkout -b develop
-
-# Start new work
-git checkout develop
-git fetch github
-git merge github/main
-
-# Work on features, commit frequently...
-git push -u github develop
-
-# When ready, create PR from github/develop -> github main
-```
-
-**Pull from `github/main` before starting work and frequently while working** to stay current with the main branch.
-
-### GitHub Actions
+## GitHub Actions
 
 - CI workflow: `.github/workflows/ci.yml`
 - Release workflow: `.github/workflows/release.yml`
-- Run `just workflows` to lint workflow files, ensure `dtolnay/rust-toolchain` is using `stable`, and all other workflows are pinned to git hashes
-- When we need to know the most recent version of a GitHub action (to upgrade or fix issues in workflow files), run `gh release view`, see this example for usage:
+- Run `just workflows` to lint workflow files
 
-```shell
-❯ gh release view --repo katyo/publish-crates --json tagName --jq '.tagName'
-v2
-```
+See [.agents/skills/github-actions/](.agents/skills/github-actions/) for workflow best practices.
 
 ## Specification References
 
@@ -113,24 +71,24 @@ A valid skill directory must contain:
 ---
 name: my-skill
 description: What this skill does and when to use it
-license: Apache-2.0          # optional
-compatibility: v1.0+         # optional
-allowed-tools: tool_pattern  # optional, experimental
-metadata:                    # optional
+license: Apache-2.0 # optional
+compatibility: v1.0+ # optional
+allowed-tools: tool_pattern # optional, experimental
+metadata: # optional
   key: value
 ---
 ```
 
 ### Validation Rules
 
-| Field           | Required | Constraints                                                                                                       |
-| --------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
+| Field           | Required | Constraints                                                                                                                                                                   |
+| --------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`          | Yes      | Max 64 characters. Lowercase letters, numbers, and hyphens only. Must not start or end with a hyphen. Must not contain consecutive hyphens (`--`). Must match directory name. |
-| `description`   | Yes      | Max 1024 characters. Non-empty.                                                                                   |
-| `license`       | No       | License name or reference to a bundled license file.                                                              |
-| `compatibility` | No       | Max 500 characters. Indicates environment requirements.                                                          |
-| `metadata`      | No       | Arbitrary key-value mapping for additional metadata.                                                              |
-| `allowed-tools` | No       | Space-delimited list of pre-approved tools. (Experimental)                                                        |
+| `description`   | Yes      | Max 1024 characters. Non-empty.                                                                                                                                               |
+| `license`       | No       | License name or reference to a bundled license file.                                                                                                                          |
+| `compatibility` | No       | Max 500 characters. Indicates environment requirements.                                                                                                                       |
+| `metadata`      | No       | Arbitrary key-value mapping for additional metadata.                                                                                                                          |
+| `allowed-tools` | No       | Space-delimited list of pre-approved tools. (Experimental)                                                                                                                    |
 
 **Unknown fields are NOT allowed** - this validator strictly follows the spec and rejects any frontmatter fields not in the list above.
 

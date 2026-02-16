@@ -1,0 +1,21 @@
+{
+  "Claude Code": "~/.claude/skills/",
+  "OpenAI Codex": "~/.codex/skills/",
+  "Gemini CLI": "~/.gemini/skills/",
+  "Google Antigravity": "~/.gemini/antigravity/skills/",
+  "Cursor": "~/.cursor/skills/",
+  "Windsurf": "~/.codeium/windsurf/skills/",
+  "TRAE": "~/.trae/skills/",
+  "GitHub Copilot": "~/.copilot/skills/",
+  "Mistral Vibe": "~/.vibe/skills/",
+  "Mux": "~/.mux/skills/",
+  "Autohand": "~/.autohand/skills/",
+  "Roo Code": "~/.roo/skills/",
+  "Firebender": "~/.firebender/skills/",
+  "Goose": "~/.config/goose/skills/",
+  "Amp": "~/.config/amp/skills/",
+  "OpenCode": "~/.config/opencode/skills/",
+  "OpenCode (alt)": "~/.opencode/skills/",
+  "Less Portable": "~/.config/agents/skills/",
+  "Portable": "~/.agents/skills/"
+}

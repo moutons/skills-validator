@@ -157,7 +157,7 @@ mod validate_json_output {
         );
         let output = run_skill_validator(&["--json", "validate", path.to_str().unwrap()]);
 
-        let stdout = String::from_utf8_lossy(&output.stdout);
+        let _stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
 
         // stdout should be empty (result goes to stderr when --json)

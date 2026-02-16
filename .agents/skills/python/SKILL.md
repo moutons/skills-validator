@@ -6,6 +6,7 @@ metadata:
   author: moutons <sdmouton@gmail.com>
   version: "0.3.0"
 ---
+
 # Python
 
 See [agentskills.io/specification](https://agentskills.io/specification) for skill structure. See [opencode.ai/docs/skills](https://opencode.ai/docs/skills/) for tool integration.

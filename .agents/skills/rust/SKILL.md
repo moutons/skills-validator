@@ -68,6 +68,8 @@ Use `Result` with custom error types. Avoid `unwrap()`.
 
 ## Tools
 
+ALWAYS run `cargo test` and address issues before committing code. Avoid treating warnings as false positives and silencing warnings. Prefer to 
+
 ```bash
 cargo fmt
 cargo clippy -- -D warnings

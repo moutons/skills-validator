@@ -38,7 +38,15 @@ skills-validator validate path/to/skill
 # Read skill properties (outputs YAML)
 skills-validator read-properties path/to/skill
 
-# Generate <available_skills> XML for agent prompts
+BV|# Generate <available_skills> XML for agent prompts
+TM|skills-validator to-prompt path/to/skill-a path/to/skill-b
+SP|
+NP|# Scan for skills across multiple tool directories
+QW|skills-validator scan --all                    # Scan repo + user home
+QX|skills-validator scan --user                   # Scan user home only
+QK|skills-validator scan --repo                  # Scan repo root only
+XP|skills-validator scan --tool claude-code      # Scan specific tool(s)
+BK|
 skills-validator to-prompt path/to/skill-a path/to/skill-b
 ```
 
@@ -128,7 +136,57 @@ What this skill does and when to use it
 </skill>
 </available_skills>
 ```
-
+QR|
+VR|## Skill Scanning
+PP|
+VP|The `scan` command discovers and validates skills across multiple agent tool directories.
+WM|
+VN|### Scan Modes
+KB|
+NV|- `--all`: Scan both the current git repository and user home directory
+XP|- `--user`: Scan only the user home directory for all tool directories
+PQ|- `--repo`: Scan only the current git repository
+XZ|- `--tool <tools>`: Scan specific tool(s) (comma-separated list)
+MM|
+QK|### Options
+PQ|
+VV|- `--dry-run`: Discover skills without validating
+SB|- `--verbose`: Show detailed output for each skill
+WB|- `--json`: Output logs as JSON to stderr
+XZ|
+HP|### Configuration
+PH|
+XP|Tool paths are configured in `paths.jsonc` which is embedded at compile time. The tool directory templates support:
+NR|
+QZ|- `$HOME` or `~`: User home directory
+XP|- `$REPO_ROOT`: Git repository root (detected via git2)
+MM|
+QK|### Exit Codes
+PQ|
+KV|- `0`: All skills valid (warnings may be present)
+RM|- `1`: Some skills invalid
+NP|- `2`: Scan or configuration error
+WB|
+HP|### Examples
+QM|
+```bash
+PQ|# Scan all known locations
+RM|skills-validator scan --all
+NM|
+# Scan only your home directory
+YQ|skills-validator scan --user
+NM|
+# Scan the current repository
+QK|skills-validator scan --repo
+NM|
+# Scan for specific tools
+QZ|skills-validator scan --tool claude-code,opencode
+NM|
+# Dry run to see what would be scanned
+PQ|skills-validator scan --all --dry-run
+```
+KB|
+WR|## Development
 ## Development
 
 ```bash

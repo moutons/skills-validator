@@ -1,10 +1,18 @@
 pub mod cli;
+pub mod discovery;
 pub mod error;
+pub mod git;
 pub mod models;
 pub mod parser;
+pub mod paths;
 pub mod prompt;
+pub mod scan;
 pub mod validator;
 
+pub use discovery::{discover_skills, DiscoveredSkill, DiscoveryResult};
+pub use git::{find_repo_root, GitError};
 pub use parser::{find_skill_md, parse_frontmatter, read_properties};
+pub use paths::{expand_path, PathsConfig, PathsError};
 pub use prompt::to_prompt;
+pub use scan::{find_duplicates, scan, ScanOptions, ScanResult, SkillValidation};
 pub use validator::{validate, ValidationResult};

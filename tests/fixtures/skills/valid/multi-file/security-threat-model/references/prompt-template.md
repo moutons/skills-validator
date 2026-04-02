@@ -89,8 +89,6 @@ Tooling Notes
 If Ripgrep (rg) is available, use it to explore the codebase. When using grep or rg, always include the -I flag to avoid searching through binary files.
 ```
 
-
-
 ## User prompt template
 
 Use this as the task prompt, filling in what you know and marking the rest as assumptions:
@@ -133,7 +131,7 @@ You MUST follow this process and reflect outputs in the final document:
       - sandboxing/isolation, privilege boundaries, subprocess execution
       - logging/auditing and error handling paths
       - CI/build/release: pipelines, dependency management, artifact publishing
-   
+
 2) System model
    a. Summarize the primary components (runtime plus critical build/CI components when relevant).
    b. Enumerate data flows and trust boundaries.
@@ -253,3 +251,4 @@ Rules:
 
 - Fill in known context, but allow the model to infer and mark assumptions.
 - Include 1–2 repo-path anchors per major claim; do not dump every match.
+```

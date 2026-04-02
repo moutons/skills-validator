@@ -13,13 +13,16 @@ pub fn find_skill_md(skill_dir: &Path) -> Option<std::path::PathBuf>
 ```
 
 **Parameters:**
+
 - `skill_dir: &Path` - Path to the skill directory
 
 **Returns:**
+
 - `Some(PathBuf)` - Path to SKILL.md or skill.md
 - `None` - If neither file exists
 
 **Behavior:**
+
 - Checks for `SKILL.md` first (preferred)
 - Falls back to `skill.md` (lowercase)
 - Returns canonical path
@@ -35,13 +38,16 @@ pub fn parse_frontmatter(content: &str) -> Result<(serde_yaml::Value, String), S
 ```
 
 **Parameters:**
+
 - `content: &str` - Full content of SKILL.md
 
 **Returns:**
+
 - `Ok((metadata, body))` - Parsed YAML and body content
 - `Err(SkillError)` - Parse error with message
 
 **Errors:**
+
 - Content doesn't start with `---`
 - Frontmatter not properly closed
 - Invalid YAML syntax
@@ -58,6 +64,7 @@ pub fn parse_frontmatter_and_body(content: &str) -> Result<(serde_yaml::Mapping,
 ```
 
 **Returns:**
+
 - `Ok((map, body))` - YAML mapping and body content
 - `Err(SkillError)` - If metadata is not a valid mapping
 
@@ -72,17 +79,21 @@ pub fn read_properties(skill_dir: &Path) -> Result<SkillProperties, SkillError>
 ```
 
 **Parameters:**
+
 - `skill_dir: &Path` - Path to skill directory
 
 **Returns:**
+
 - `Ok(SkillProperties)` - Parsed properties
 - `Err(SkillError)` - If SKILL.md missing or invalid
 
 **Required fields:**
+
 - `name` - Non-empty string
 - `description` - Non-empty string
 
 **Optional fields:**
+
 - `license`
 - `compatibility`
 - `allowed-tools`
@@ -101,13 +112,16 @@ pub fn validate(skill_dir: &Path) -> ValidationResult
 ```
 
 **Parameters:**
+
 - `skill_dir: &Path` - Path to skill directory
 
 **Returns:** `ValidationResult` with:
+
 - `errors: Vec<String>` - Validation errors
 - `warnings: Vec<String>` - Validation warnings
 
 **Validation checks:**
+
 1. Directory exists
 2. SKILL.md exists
 3. Frontmatter parses correctly
@@ -134,6 +148,7 @@ pub fn validate_metadata(metadata: &serde_yaml::Mapping, skill_dir: Option<&Path
 ```
 
 **Parameters:**
+
 - `metadata: &serde_yaml::Mapping` - Parsed frontmatter
 - `skill_dir: Option<&Path>` - Optional directory for name matching
 
@@ -160,10 +175,12 @@ impl Default for ValidationResult;
 ```
 
 **Methods:**
+
 - `new()` - Creates empty result
 - `default()` - Same as new()
 
 **Fields:**
+
 - `errors` - Fatal validation errors (block validation)
 - `warnings` - Non-fatal issues (don't block validation)
 
@@ -180,12 +197,15 @@ pub fn to_prompt(skill_dirs: &[&str]) -> String
 ```
 
 **Parameters:**
+
 - `skill_dirs: &[&str]` - Slice of skill directory paths
 
 **Returns:**
+
 - XML string with escaped content
 
 **Output format:**
+
 ```xml
 <available_skills>
 <skill>
@@ -203,6 +223,7 @@ What this skill does...
 ```
 
 **Notes:**
+
 - HTML-escapes name and description
 - Skips skills that fail to read
 - Outputs to stderr on read failures
@@ -228,6 +249,7 @@ pub struct SkillProperties {
 ```
 
 **Fields:**
+
 - `name` - Skill identifier (required)
 - `description` - Skill description (required)
 - `license` - License identifier (optional)
@@ -245,6 +267,7 @@ impl SkillProperties {
 ```
 
 **Serialization:**
+
 - Uses `#[serde(skip_serializing_if = "Option::is_none")]` for optional fields
 - Metadata serializes as nested mapping
 
@@ -268,10 +291,12 @@ pub enum SkillError {
 ```
 
 **Variants:**
+
 - `ParseError` - YAML parsing, file I/O errors
 - `ValidationError` - Validation rule violations
 
 **Conversions:**
+
 - `From<std::io::Error>` - I/O errors become ParseError
 - `From<serde_yaml::Error>` - YAML errors become ParseError
 
@@ -281,7 +306,7 @@ pub enum SkillError {
 
 ### Commands
 
-#### `validate`
+#### `validate` (CLI)
 
 Validate a skill directory.
 
@@ -290,13 +315,16 @@ skills-validator validate <PATH>
 ```
 
 **Arguments:**
+
 - `PATH` - Path to skill directory
 
 **Exit codes:**
+
 - `0` - Valid (may have warnings)
 - `1` - Invalid (errors present)
 
 **Output:**
+
 - stdout: Validation result message
 - stderr: Log messages and errors
 
@@ -311,13 +339,16 @@ skills-validator read-properties <PATH>
 ```
 
 **Arguments:**
+
 - `PATH` - Path to skill directory
 
 **Output:**
+
 - stdout: YAML formatted properties
 - stderr: Log messages
 
 **Example output:**
+
 ```yaml
 name: my-skill
 description: What this skill does
@@ -337,9 +368,11 @@ skills-validator to-prompt <PATH>...
 ```
 
 **Arguments:**
+
 - `PATH...` - One or more skill directory paths
 
 **Output:**
+
 - stdout: XML block
 - stderr: Warnings for unreadable skills
 
@@ -347,12 +380,13 @@ skills-validator to-prompt <PATH>...
 
 ### Global Options
 
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--log-level` | `-l` | Set log level: error, warn, info, debug (default: info) |
-| `--json` | | Output logs as JSON to stderr |
+| Option        | Short | Description                                             |
+| ------------- | ----- | ------------------------------------------------------- |
+| `--log-level` | `-l`  | Set log level: error, warn, info, debug (default: info) |
+| `--json`      |       | Output logs as JSON to stderr                           |
 
 **Log levels:**
+
 - `error` - Show only errors
 - `warn` - Show warnings and errors (default)
 - `info` - Show informational messages
@@ -362,12 +396,13 @@ skills-validator to-prompt <PATH>...
 
 ### Output Streams
 
-| Stream | Content |
-|--------|---------|
+| Stream | Content                                      |
+| ------ | -------------------------------------------- |
 | stdout | Data/results (YAML, XML, validation results) |
 | stderr | All log messages (INFO, WARN, DEBUG, errors) |
 
 **Best practice:**
+
 - Parse stdout for programmatic use
 - Read stderr for diagnostics
 

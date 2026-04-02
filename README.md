@@ -136,39 +136,13 @@ What this skill does and when to use it
 </skill>
 </available_skills>
 ```
-QR|
-VR|## Skill Scanning
-PP|
-VP|The `scan` command discovers and validates skills across multiple agent tool directories.
-WM|
-VN|### Scan Modes
-KB|
-NV|- `--all`: Scan both the current git repository and user home directory
-XP|- `--user`: Scan only the user home directory for all tool directories
-PQ|- `--repo`: Scan only the current git repository
-XZ|- `--tool <tools>`: Scan specific tool(s) (comma-separated list)
-MM|
-QK|### Options
-PQ|
-VV|- `--dry-run`: Discover skills without validating
-SB|- `--verbose`: Show detailed output for each skill
-WB|- `--json`: Output logs as JSON to stderr
-XZ|
-HP|### Configuration
-PH|
-XP|Tool paths are configured in `paths.jsonc` which is embedded at compile time. The tool directory templates support:
-NR|
-QZ|- `$HOME` or `~`: User home directory
-XP|- `$REPO_ROOT`: Git repository root (detected via git2)
-MM|
-QK|### Exit Codes
-PQ|
-KV|- `0`: All skills valid (warnings may be present)
-RM|- `1`: Some skills invalid
-NP|- `2`: Scan or configuration error
-WB|
-HP|### Examples
-QM|
+
+QR| VR|## Skill Scanning PP| VP|The `scan` command discovers and validates skills across multiple agent tool directories. WM| VN|### Scan Modes KB| NV|- `--all`: Scan both the current git repository and user home directory XP|- `--user`: Scan only
+the user home directory for all tool directories PQ|- `--repo`: Scan only the current git repository XZ|- `--tool <tools>`: Scan specific tool(s) (comma-separated list) MM| QK|### Options PQ| VV|- `--dry-run`: Discover skills without validating SB|-
+`--verbose`: Show detailed output for each skill WB|- `--json`: Output logs as JSON to stderr XZ| HP|### Configuration PH| XP|Tool paths are configured in `paths.jsonc` which is embedded at compile time. The tool directory templates support: NR| QZ|-
+`$HOME` or `~`: User home directory XP|- `$REPO_ROOT`: Git repository root (detected via git2) MM| QK|### Exit Codes PQ| KV|- `0`: All skills valid (warnings may be present) RM|- `1`: Some skills invalid NP|- `2`: Scan or configuration error WB|
+HP|### Examples QM|
+
 ```bash
 PQ|# Scan all known locations
 RM|skills-validator scan --all
@@ -185,8 +159,9 @@ NM|
 # Dry run to see what would be scanned
 PQ|skills-validator scan --all --dry-run
 ```
-KB|
-WR|## Development
+
+KB| WR|## Development
+
 ## Development
 
 ```bash

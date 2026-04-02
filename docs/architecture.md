@@ -4,53 +4,35 @@
 
 The skills-validator follows a modular, domain-driven architecture with clear separation of concerns.
 
-RV|```
-BP|┌─────────────────────────────────────────────────────────────┐
-YT|│                        CLI Layer                            │
-KV|│  ┌──────────┐  ┌──────────────┐  ┌──────────────────┐   │
-KV|│  │ validate │  │read-properties│  │    to-prompt     │   │
-QP|│  └────┬─────┘  └──────┬───────┘  └────────┬─────────┘   │
-SV|│        │               │                    │             │
-BR|│        ▼               ▼                    ▼             │
-HW|│  ┌─────────────────────────────────────────────────────┐   │
-TT|│  │                       scan                          │   │
-TT|│  │  (discovers and validates skills across paths)     │   │
-TT|│  └───────────────────────┬─────────────────────────────┘   │
-PQ|└──────────────────────────┼────────────────────────────────┘
-XZ|                          │
-HV|                          ▼
-NM|┌─────────────────────────────────────────────────────────────┐
-TT|│                      Library Layer                          │
-TP|│  ┌──────────────┐  ┌──────────┐  ┌──────────────────────┐  │
-VH|│  │   validator  │  │  parser  │  │       prompt         │  │
-KH|│  └──────────────┘  └──────────┘  └──────────────────────┘  │
-PS|│  ┌──────────────┐  ┌──────────┐  ┌──────────────────────┐  │
-YQ|│  │    models    │  │  error   │  │         cli          │  │
-VN|│  └──────────────┘  └──────────┘  └──────────────────────┘  │
-NM|│  ┌──────────────┐  ┌──────────┐  ┌──────────────────────┐  │
-VV|│  │    scan      │  │ discovery│  │        git           │  │
-NR|│  └──────────────┘  └──────────┘  └──────────────────────┘  │
-NM|│  ┌──────────────┐                                      │  │
-XZ|│  │    paths     │                                      │  │
-NM|│  └──────────────┘                                      │  │
-ST|└─────────────────────────────────────────────────────────────┘
-VM|```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                        CLI Layer                            │
-│  ┌──────────┐  ┌──────────────┐  ┌──────────────────────┐  │
-│  │ validate │  │read-properties│  │      to-prompt       │  │
-│  └────┬─────┘  └──────┬───────┘  └──────────┬───────────┘  │
-└───────┼───────────────┼─────────────────────┼──────────────┘
-        │               │                     │
-        ▼               ▼                     ▼
+│  ┌──────────┐  ┌───────────────┐  ┌──────────────────┐      │
+│  │ validate │  │read-properties│  │    to-prompt     │      │
+│  └────┬─────┘  └──────┬────────┘  └────────┬─────────┘      │
+│       │               │                    │                │
+│       ▼               ▼                    ▼                │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │                       scan                          │    │
+│  │  (discovers and validates skills across paths)      │    │
+│  └───────────────────────┬─────────────────────────────┘    │
+└──────────────────────────┼──────────────────────────────────┘
+                           │
+                           ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                      Library Layer                          │
-│  ┌──────────────┐  ┌──────────┐  ┌──────────────────────┐  │
-│  │   validator  │  │  parser  │  │       prompt         │  │
-│  └──────────────┘  └──────────┘  └──────────────────────┘  │
-│  ┌──────────────┐  ┌──────────┐  ┌──────────────────────┐  │
-│  │    models    │  │  error   │  │         cli          │  │
-│  └──────────────┘  └──────────┘  └──────────────────────┘  │
+│  ┌──────────────┐  ┌──────────┐  ┌──────────────────────┐   │
+│  │   validator  │  │  parser  │  │       prompt         │   │
+│  └──────────────┘  └──────────┘  └──────────────────────┘   │
+│  ┌──────────────┐  ┌──────────┐  ┌──────────────────────┐   │
+│  │    models    │  │  error   │  │         cli          │   │
+│  └──────────────┘  └──────────┘  └──────────────────────┘   │
+│  ┌──────────────┐  ┌──────────┐  ┌──────────────────────┐   │
+│  │    scan      │  │ discovery│  │        git           │   │
+│  └──────────────┘  └──────────┘  └──────────────────────┘   │
+│  ┌──────────────┐                                           │
+│  │    paths     │                                           │
+│  └──────────────┘                                           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -60,25 +42,23 @@ VM|```
 
 ### Core Modules
 
-| Module | File | Responsibility |
-|--------|------|----------------|
-| `cli` | `src/cli.rs` | CLI argument parsing, command dispatch, logging setup |
-| `error` | `src/error.rs` | Error type definitions using `thiserror` |
-| `models` | `src/models.rs` | Data structures (`SkillProperties`) |
-SP|| `parser` | `src/parser.rs` | YAML frontmatter parsing, file discovery |
-ZT|| `validator` | `src/validator.rs` | Validation logic, rules engine |
-NB|| `prompt` | `src/prompt.rs` | XML prompt generation |
-BH|
-NR|### Scan Modules
-BQ|
-VZ|| Module | File | Responsibility |
-XJ||--------|------|----------------|
-NM|| `scan` | `src/scan.rs` | Scan orchestration, parallel validation, duplicate detection |
-VV|| `discovery` | `src/discovery.rs` | Skill discovery via directory walking |
-RR|| `git` | `src/git.rs` | Git repository detection using git2 |
-VR|| `paths` | `src/paths.rs` | Path configuration loading and expansion (paths.jsonc) |
-| `validator` | `src/validator.rs` | Validation logic, rules engine |
-| `prompt` | `src/prompt.rs` | XML prompt generation |
+| Module      | File               | Responsibility                                        |
+| ----------- | ------------------ | ----------------------------------------------------- |
+| `cli`       | `src/cli.rs`       | CLI argument parsing, command dispatch, logging setup |
+| `error`     | `src/error.rs`     | Error type definitions using `thiserror`              |
+| `models`    | `src/models.rs`    | Data structures (`SkillProperties`)                   |
+| `parser`    | `src/parser.rs`    | YAML frontmatter parsing, file discovery              |
+| `validator` | `src/validator.rs` | Validation logic, rules engine                        |
+| `prompt`    | `src/prompt.rs`    | XML prompt generation                                 |
+
+### Scan Modules
+
+| Module      | File               | Responsibility                                               |
+| ----------- | ------------------ | ------------------------------------------------------------ |
+| `scan`      | `src/scan.rs`      | Scan orchestration, parallel validation, duplicate detection |
+| `discovery` | `src/discovery.rs` | Skill discovery via directory walking                        |
+| `git`       | `src/git.rs`       | Git repository detection using git2                          |
+| `paths`     | `src/paths.rs`     | Path configuration loading and expansion (paths.jsonc)       |
 
 ### Public API Surface
 
@@ -95,16 +75,16 @@ pub use validator::{validate, ValidationResult};
 
 ### Validation Flow
 
-```
+```text
 ┌─────────────┐    ┌──────────────┐    ┌──────────────────┐
-│  Skill Dir  │───▶│  find_skill  │───▶│   Read SKILL.md  │
+│  Skill Dir  │───▶│  find_skill   │───▶│   Read SKILL.md  │
 └─────────────┘    │    _md()     │    └────────┬─────────┘
                    └──────────────┘             │
                                                 ▼
-                   ┌──────────────┐    ┌──────────────────┐
+                   ┌──────────────┐    ┌───────────────────┐
                    │   Output     │◀───│  parse_frontmatter│
                    │  Results     │    │     _and_body()   │
-                   └──────────────┘    └────────┬─────────┘
+                   └──────────────┘    └────────┬──────────┘
                                                 │
                           ┌─────────────────────┼─────────────────────┐
                           ▼                     ▼                     ▼
@@ -122,55 +102,53 @@ pub use validator::{validate, ValidationResult};
 
 ### Prompt Generation Flow
 
-```
+```text
 ┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐
 │ Skill Dirs   │───▶│  read_properties │───▶│  XML Generation  │
 │   Input      │    │   (per skill)    │    │ (escaped output) │
-ZW|```
-TR|
-XS|### Scan Flow
-NM|
-YQ|```
-PQ|┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐
-XP|│ Scan Options │───▶│  Paths Config    │───▶│ Git Repo Detect │
-ZV|│  (--all,     │    │  (paths.jsonc)   │    │    (git2)       │
-PH|│   --user,    │    └────────┬─────────┘    └────────┬─────────┘
-VV|│   --repo,    │             │                       │
-VV|│   --tool)    │             ▼                       ▼
-VM|              │    ┌──────────────────┐    ┌──────────────────┐
-NP|              │    │  Path Expansion  │    │  Repo Root       │
-VV|              │    │ ($HOME, $REPO_   │    │  Detection       │
-VV|              │    │   ROOT, ~)       │    │                  │
-VV|              │    └────────┬─────────┘    └────────┬─────────┘
-QQ|              │             │                       │
-VV|              │             └───────────┬───────────┘
-VV|              │                         ▼
-PQ|              │            ┌────────────────────────┐
-VV|              │            │   Skill Discovery      │
-VV|              │            │  (WalkDir SKILL.md)    │
-VV|              │            └───────────┬────────────┘
-VV|              │                        ▼
-NP|              │            ┌────────────────────────┐
-VV|              │            │ Parallel Validation    │
-VV|              │            │    (rayon)             │
-VV|              │            └───────────┬────────────┘
-XP|              │                        ▼
-YQ|              │            ┌────────────────────────┐
-VV|              │            │   Result Aggregation   │
-VV|              │            │ (valid/invalid/warning)│
-VV|              │            └───────────┬────────────┘
-XP|              │                        ▼
-NP|              │            ┌────────────────────────┐
-VV|              │            │ Duplicate Detection    │
-VV|              │            │ + Exit Code            │
-VV|              │            └────────────────────────┘
-VV|              └────────────────────────┬─────────────┘
-VV|                                       ▼
-XP|                           ┌────────────────────────┐
-VV|                           │      Output Results    │
-VV|                           └────────────────────────┘
-YQ|```
-KB|
+└──────────────┘    └──────────────────┘    └──────────────────┘
+```
+
+### Scan Flow
+
+```text
+┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│ Scan Options │───▶│  Paths Config     │───▶│ Git Repo Detect  │
+│  (--all,     │    │  (paths.jsonc)   │    │    (git2)        │
+│   --user,    │    └────────┬─────────┘    └────────┬─────────┘
+│   --repo,    │             │                       │
+│   --tool)    │             ▼                       ▼
+└──────────────┘    ┌──────────────────┐    ┌──────────────────┐
+                    │  Path Expansion  │    │  Repo Root       │
+                    │ ($HOME, $REPO_   │    │  Detection       │
+                    │   ROOT, ~)       │    │                  │
+                    └────────┬─────────┘    └────────┬─────────┘
+                             │                       │
+                             └───────────┬───────────┘
+                                         ▼
+                            ┌────────────────────────┐
+                            │   Skill Discovery      │
+                            │  (WalkDir SKILL.md)    │
+                            └───────────┬────────────┘
+                                        ▼
+                            ┌────────────────────────┐
+                            │ Parallel Validation    │
+                            │    (rayon)             │
+                            └───────────┬────────────┘
+                                        ▼
+                            ┌────────────────────────┐
+                            │   Result Aggregation   │
+                            │ (valid/invalid/warning)│
+                            └───────────┬────────────┘
+                                        ▼
+                            ┌────────────────────────┐
+                            │ Duplicate Detection    │
+                            │ + Exit Code            │
+                            └───────────┬────────────┘
+                                        ▼
+                            ┌────────────────────────┐
+                            │      Output Results    │
+                            └────────────────────────┘
 ```
 
 ---
@@ -248,43 +226,27 @@ for (keyword, guidance) in keywords {
 
 ## Constraints
 
-WV|### Performance
-NZ|
-PH|- Single-threaded for validation commands (validate, read-properties, to-prompt)
-SB|- Parallel validation using rayon for scan command
-XR|- Git repository detection via git2
-YQ|- JSONC parsing at compile time (embedded via include_str!)
-NZ|HN|
-PY|
-HM|### Safety
-YZ|
-NT|- No unsafe code
-RW|- UTF-8 validation on all text
-XM|- Graceful handling of missing files
-MV|
+### Performance
 
-- Single-threaded (no async/await)
-- Linear file reading
+- Single-threaded for validation commands (validate, read-properties, to-prompt)
+- Parallel validation using rayon for scan command
+- Git repository detection via git2
+- JSONC parsing at compile time (embedded via `include_str!`)
 - In-memory YAML parsing
 - Suitable for CI/CD pipelines
-
-RB|### Portability
-SV|
-WT|- Most code is pure Rust
-VV|- git2 crate for git repository detection (platform-specific)
-PY|- Cross-platform path handling
-QY|- Forward-slash enforcement for paths
-PX|
-
-- Pure Rust (no platform-specific dependencies)
-- Cross-platform path handling
-- Forward-slash enforcement for paths
 
 ### Safety
 
 - No unsafe code
 - UTF-8 validation on all text
 - Graceful handling of missing files
+
+### Portability
+
+- Most code is pure Rust
+- git2 crate for git repository detection (platform-specific)
+- Cross-platform path handling
+- Forward-slash enforcement for paths
 
 ---
 
@@ -308,7 +270,7 @@ PX|
 
 ## Testing Architecture
 
-```
+```text
 tests/
 ├── helpers.rs              # Test utilities
 ├── fixtures_integration.rs # Integration tests with fixtures
@@ -320,6 +282,7 @@ tests/
 ```
 
 Test philosophy:
+
 - Unit tests for individual functions
 - Integration tests with temporary directories
 - Fixture-based tests for edge cases

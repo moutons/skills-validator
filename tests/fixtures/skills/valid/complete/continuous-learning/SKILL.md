@@ -33,30 +33,20 @@ Edit `config.json` to customize:
   "extraction_threshold": "medium",
   "auto_approve": false,
   "learned_skills_path": "~/.claude/skills/learned/",
-  "patterns_to_detect": [
-    "error_resolution",
-    "user_corrections",
-    "workarounds",
-    "debugging_techniques",
-    "project_specific"
-  ],
-  "ignore_patterns": [
-    "simple_typos",
-    "one_time_fixes",
-    "external_api_issues"
-  ]
+  "patterns_to_detect": ["error_resolution", "user_corrections", "workarounds", "debugging_techniques", "project_specific"],
+  "ignore_patterns": ["simple_typos", "one_time_fixes", "external_api_issues"]
 }
 ```
 
 ## Pattern Types
 
-| Pattern | Description |
-|---------|-------------|
-| `error_resolution` | How specific errors were resolved |
-| `user_corrections` | Patterns from user corrections |
-| `workarounds` | Solutions to framework/library quirks |
-| `debugging_techniques` | Effective debugging approaches |
-| `project_specific` | Project-specific conventions |
+| Pattern                | Description                           |
+| ---------------------- | ------------------------------------- |
+| `error_resolution`     | How specific errors were resolved     |
+| `user_corrections`     | Patterns from user corrections        |
+| `workarounds`          | Solutions to framework/library quirks |
+| `debugging_techniques` | Effective debugging approaches        |
+| `project_specific`     | Project-specific conventions          |
 
 ## Hook Setup
 
@@ -65,13 +55,17 @@ Add to your `~/.claude/settings.json`:
 ```json
 {
   "hooks": {
-    "Stop": [{
-      "matcher": "*",
-      "hooks": [{
-        "type": "command",
-        "command": "~/.claude/skills/continuous-learning/evaluate-session.sh"
-      }]
-    }]
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/skills/continuous-learning/evaluate-session.sh"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
@@ -95,16 +89,17 @@ Add to your `~/.claude/settings.json`:
 
 Homunculus v2 takes a more sophisticated approach:
 
-| Feature | Our Approach | Homunculus v2 |
-|---------|--------------|---------------|
+| Feature     | Our Approach               | Homunculus v2                                |
+| ----------- | -------------------------- | -------------------------------------------- |
 | Observation | Stop hook (end of session) | PreToolUse/PostToolUse hooks (100% reliable) |
-| Analysis | Main context | Background agent (Haiku) |
-| Granularity | Full skills | Atomic "instincts" |
-| Confidence | None | 0.3-0.9 weighted |
-| Evolution | Direct to skill | Instincts → cluster → skill/command/agent |
-| Sharing | None | Export/import instincts |
+| Analysis    | Main context               | Background agent (Haiku)                     |
+| Granularity | Full skills                | Atomic "instincts"                           |
+| Confidence  | None                       | 0.3-0.9 weighted                             |
+| Evolution   | Direct to skill            | Instincts → cluster → skill/command/agent    |
+| Sharing     | None                       | Export/import instincts                      |
 
 **Key insight from homunculus:**
+
 > "v1 relied on skills to observe. Skills are probabilistic—they fire ~50-80% of the time. v2 uses hooks for observation (100% reliable) and instincts as the atomic unit of learned behavior."
 
 ### Potential v2 Enhancements
@@ -116,4 +111,3 @@ Homunculus v2 takes a more sophisticated approach:
 5. **Evolution path** - Cluster related instincts into skills/commands
 
 See: `/Users/affoon/Documents/tasks/12-continuous-learning-v2.md` for full spec.
-

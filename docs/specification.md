@@ -2,19 +2,22 @@
 
 ## Overview
 
-A Rust CLI tool and library for validating agent skills according to the [Agent Skills specification](https://agentskills.io/specification). This is a reimplementation of the Python `agentskills/skills-ref` library with improvements, supporting both the official spec and Claude Code extensions.
+A Rust CLI tool and library for validating agent skills according to the [Agent Skills specification](https://agentskills.io/specification). This is a reimplementation of the Python `agentskills/skills-ref` library with improvements, supporting both
+the official spec and Claude Code extensions.
 
 ---
 
 ## Goals and Objectives
 
 ### Primary Goals
+
 1. **Validate Skill Compliance**: Ensure agent skill directories conform to the official Agent Skills specification
 2. **Enforce Strict Standards**: Unknown fields cause validation failures, maintaining spec purity
 3. **Generate Agent Prompts**: Create XML-formatted `<available_skills>` blocks for system prompts
 4. **Support Multiple Implementations**: Work with both OpenCode and Claude Code skill formats
 
 ### Success Criteria
+
 - Exit code 0 = valid skill with no errors
 - Exit code 1 = errors present (warnings alone don't fail validation)
 - Fast, reliable validation for CI/CD pipelines
@@ -24,12 +27,12 @@ A Rust CLI tool and library for validating agent skills according to the [Agent 
 
 ## Target Audience
 
-| Audience | Use Case |
-|----------|----------|
-| **Skill Authors** | Validate skills before publishing |
-| **DevOps/CI** | Automated validation in pipelines |
+| Audience             | Use Case                                     |
+| -------------------- | -------------------------------------------- |
+| **Skill Authors**    | Validate skills before publishing            |
+| **DevOps/CI**        | Automated validation in pipelines            |
 | **Agent Developers** | Generate prompt XML for system configuration |
-| **Tool Builders** | Rust API for custom validation tools |
+| **Tool Builders**    | Rust API for custom validation tools         |
 
 ---
 
@@ -41,19 +44,19 @@ The validator strictly enforces the official specification. Unknown fields cause
 
 #### Required Fields
 
-| Field | Constraints |
-|-------|-------------|
-| `name` | Max 64 chars. Lowercase letters, numbers, hyphens. No leading/trailing hyphen. No consecutive hyphens. Must match directory name. Pattern: `^[a-z0-9]+(-[a-z0-9]+)*$` |
-| `description` | Max 1024 chars. Non-empty string. |
+| Field         | Constraints                                                                                                                                                           |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`        | Max 64 chars. Lowercase letters, numbers, hyphens. No leading/trailing hyphen. No consecutive hyphens. Must match directory name. Pattern: `^[a-z0-9]+(-[a-z0-9]+)*$` |
+| `description` | Max 1024 chars. Non-empty string.                                                                                                                                     |
 
 #### Optional Fields
 
-| Field | Constraints |
-|-------|-------------|
-| `license` | License name or reference to bundled license file |
-| `compatibility` | Max 500 chars. Environment requirements |
+| Field           | Constraints                                               |
+| --------------- | --------------------------------------------------------- |
+| `license`       | License name or reference to bundled license file         |
+| `compatibility` | Max 500 chars. Environment requirements                   |
 | `allowed-tools` | Space-delimited list of pre-approved tools (experimental) |
-| `metadata` | Arbitrary key-value mapping for additional metadata |
+| `metadata`      | Arbitrary key-value mapping for additional metadata       |
 
 ### Claude Code Extensions
 
@@ -73,7 +76,7 @@ Reference: [Claude Code Skills Documentation](https://code.claude.com/docs/en/sk
 
 ## Skill Directory Structure
 
-```
+```text
 skill-name/
 ├── SKILL.md          # Required - skill definition with YAML frontmatter
 ├── scripts/          # Optional - script resources
@@ -94,7 +97,6 @@ metadata:
   author: John Doe
   version: "1.0"
 ---
-
 # Skill Content
 
 This is the skill documentation that agents will read when loading the skill.
@@ -106,23 +108,23 @@ This is the skill documentation that agents will read when loading the skill.
 
 ### Technical Constraints
 
-| Constraint | Description |
-|------------|-------------|
-| UTF-8 Only | All text files must be UTF-8 encoded |
-| YAML Frontmatter | Must start with `---` and close with `---` |
-| No Windows Paths | Cross-platform compatibility required |
-| Max Body Lines | 500 lines recommended for progressive disclosure |
+| Constraint       | Description                                      |
+| ---------------- | ------------------------------------------------ |
+| UTF-8 Only       | All text files must be UTF-8 encoded             |
+| YAML Frontmatter | Must start with `---` and close with `---`       |
+| No Windows Paths | Cross-platform compatibility required            |
+| Max Body Lines   | 500 lines recommended for progressive disclosure |
 
 ### Content Best Practices (Warnings)
 
 The validator warns when skill content is missing key directive words:
 
-| Keyword | Purpose |
-|---------|---------|
-| `never` | Clear directives on what NOT to do |
-| `always` | Clear directives on what TO do |
-| `when` | Condition triggers for behaviors |
-| `example` | Concrete examples of usage |
+| Keyword   | Purpose                            |
+| --------- | ---------------------------------- |
+| `never`   | Clear directives on what NOT to do |
+| `always`  | Clear directives on what TO do     |
+| `when`    | Condition triggers for behaviors   |
+| `example` | Concrete examples of usage         |
 
 ### File Organization Warnings
 
@@ -136,25 +138,25 @@ The validator warns when skill content is missing key directive words:
 
 ### Runtime Dependencies
 
-| Crate | Version | Purpose |
-|-------|---------|---------|
-| clap | 4.5 | CLI argument parsing with derive macros |
-| serde | 1.0 | Serialization framework |
-| serde_yaml | 0.9 | YAML parsing for frontmatter |
-| serde_json | 1.0 | JSON output support |
-| html-escape | 0.2 | XML escaping for prompts |
-| thiserror | 2.0 | Error type definitions |
-| unicode-normalization | 0.1 | NFKC normalization for skill names |
-| log | 0.4 | Logging facade |
-| env_logger | 0.11 | Environment-based logging |
-| owo-colors | 4 | Terminal colors |
-| regex | 1.10 | Pattern matching |
+| Crate                 | Version | Purpose                                 |
+| --------------------- | ------- | --------------------------------------- |
+| clap                  | 4.5     | CLI argument parsing with derive macros |
+| serde                 | 1.0     | Serialization framework                 |
+| serde_yaml            | 0.9     | YAML parsing for frontmatter            |
+| serde_json            | 1.0     | JSON output support                     |
+| html-escape           | 0.2     | XML escaping for prompts                |
+| thiserror             | 2.0     | Error type definitions                  |
+| unicode-normalization | 0.1     | NFKC normalization for skill names      |
+| log                   | 0.4     | Logging facade                          |
+| env_logger            | 0.11    | Environment-based logging               |
+| owo-colors            | 4       | Terminal colors                         |
+| regex                 | 1.10    | Pattern matching                        |
 
 ### Development Dependencies
 
-| Crate | Version | Purpose |
-|-------|---------|---------|
-| tempfile | 3.10 | Temporary file creation in tests |
+| Crate    | Version | Purpose                          |
+| -------- | ------- | -------------------------------- |
+| tempfile | 3.10    | Temporary file creation in tests |
 
 ---
 

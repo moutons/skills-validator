@@ -60,16 +60,17 @@ skills-validator to-prompt path/to/skill-a path/to/skill-b
 
 ### Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Valid (warnings may be present) |
-| 1 | Invalid (errors present) |
+| Code | Meaning                         |
+| ---- | ------------------------------- |
+| 0    | Valid (warnings may be present) |
+| 1    | Invalid (errors present)        |
 
 ---
 
 ## Contributing
 
 See the [Development Guide](development-guide.md) for:
+
 - Setting up your development environment
 - Running tests
 - Code conventions

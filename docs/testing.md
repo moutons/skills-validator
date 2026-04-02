@@ -8,7 +8,7 @@ The skills-validator uses a comprehensive testing approach combining unit tests 
 
 ## Test Organization
 
-```
+```text
 tests/
 ├── helpers.rs              # Shared test utilities
 ├── fixtures_integration.rs # Tests using fixture files
@@ -30,6 +30,7 @@ Tests for individual functions in isolation.
 **Location:** Inline in source files with `#[cfg(test)]` or in `tests/` directory
 
 **Example:**
+
 ```rust
 // tests/validator.rs
 #[test]
@@ -53,6 +54,7 @@ Tests for complete workflows and CLI behavior.
 **Location:** `tests/` directory
 
 **Example:**
+
 ```rust
 // tests/fixtures_integration.rs
 #[test]
@@ -66,7 +68,7 @@ description: A valid test skill
 Always test your code.
 Never skip validation.
 "#);
-    
+
     let result = validate(temp_dir.path());
     assert!(result.errors.is_empty());
 }
@@ -79,6 +81,7 @@ Tests for command-line interface behavior and output formats.
 **Location:** `tests/cli_output.rs`
 
 **Coverage:**
+
 - Exit codes
 - Output format (text vs JSON)
 - Error messages
@@ -103,7 +106,7 @@ pub fn create_test_skill(name: &str, content: &str) -> TempDir {
 
 // Create skill with additional files
 pub fn create_test_skill_with_files(
-    name: &str, 
+    name: &str,
     skill_content: &str,
     files: Vec<(&str, &str)>
 ) -> TempDir {
@@ -210,7 +213,7 @@ cargo test --test validator
 
 ### Fixture Directory Structure
 
-```
+```text
 tests/fixtures/
 ├── valid/
 │   └── basic/
@@ -259,10 +262,10 @@ fn test_to_prompt_empty_skills_empty_xml()
 fn test_feature_scenario() {
     // Arrange
     let input = setup_test_data();
-    
+
     // Act
     let result = function_under_test(input);
-    
+
     // Assert
     assert_eq!(result, expected);
 }
@@ -281,9 +284,9 @@ fn test_with_temp_files() {
     let dir = tempdir().unwrap();
     let file_path = dir.path().join("SKILL.md");
     fs::write(&file_path, "content").unwrap();
-    
+
     // test using file_path...
-    
+
     // dir is automatically cleaned up when it goes out of scope
 }
 ```
@@ -293,6 +296,7 @@ fn test_with_temp_files() {
 ## Continuous Integration
 
 Tests run automatically on:
+
 - Pull requests
 - Pushes to main
 - Releases

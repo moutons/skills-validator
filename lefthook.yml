@@ -1,0 +1,4 @@
+pre-push:
+  commands:
+    ensureci:
+      run: just ensure-ci

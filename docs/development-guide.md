@@ -30,7 +30,7 @@ cargo test
 
 ## Project Structure
 
-```
+```text
 .
 ├── src/
 │   ├── main.rs          # CLI entry point
@@ -61,6 +61,7 @@ just ensure-ci
 ```
 
 This runs:
+
 1. `fmt` - Check Rust formatting
 2. `clippy` - Run clippy lints
 3. `test` - Run all tests
@@ -158,7 +159,7 @@ pub use validator::{validate, ValidationResult};
 
 ### Test Organization
 
-```
+```text
 tests/
 ├── helpers.rs              # Shared test utilities
 ├── fixtures_integration.rs # Tests with fixture files
@@ -172,6 +173,7 @@ tests/
 ### Writing Tests
 
 **Unit tests** (in source files):
+
 ```rust
 #[cfg(test)]
 mod tests {
@@ -185,6 +187,7 @@ mod tests {
 ```
 
 **Integration tests** (in `tests/`):
+
 ```rust
 use skills_validator::validate;
 use std::path::Path;
@@ -197,6 +200,7 @@ fn test_validate_skill() {
 ```
 
 **Using temporary directories:**
+
 ```rust
 use tempfile::tempdir;
 use std::fs;
@@ -206,7 +210,7 @@ fn test_with_temp_dir() {
     let dir = tempdir().unwrap();
     let skill_md = dir.path().join("SKILL.md");
     fs::write(&skill_md, "---\nname: test\n---\n").unwrap();
-    
+
     let result = validate(dir.path());
     // assertions...
 }
@@ -244,20 +248,20 @@ fn validate_my_rule(skill_dir: &Path) -> ValidationResult {
 }
 ```
 
-2. **Call from main validate function**:
+1. **Call from main validate function**:
 
 ```rust
 pub fn validate(skill_dir: &Path) -> ValidationResult {
     // existing validations...
-    
+
     let my_rule_result = validate_my_rule(&skill_dir);
     result.warnings.extend(my_rule_result.warnings);
-    
+
     result
 }
 ```
 
-3. **Add tests** in `tests/validator.rs`:
+1. **Add tests** in `tests/validator.rs`:
 
 ```rust
 #[test]
@@ -266,7 +270,7 @@ fn test_my_rule() {
 }
 ```
 
-4. **Document** in `docs/validation-rules.md`
+1. **Document** in `docs/validation-rules.md`
 
 ### Adding a New Field
 
@@ -281,7 +285,7 @@ pub struct SkillProperties {
 }
 ```
 
-2. **Update validator** in `src/validator.rs`:
+1. **Update validator** in `src/validator.rs`:
 
 ```rust
 const ALLOWED_FIELDS: &[&str] = &[
@@ -290,13 +294,13 @@ const ALLOWED_FIELDS: &[&str] = &[
 ];
 ```
 
-3. **Update parser** in `src/parser.rs`:
+1. **Update parser** in `src/parser.rs`:
 
 ```rust
 let new_field = get_optional_string(map, "new-field");
 ```
 
-4. **Add tests** and **update documentation**
+1. **Add tests** and **update documentation**
 
 ---
 
@@ -326,16 +330,19 @@ skills-validator --json validate ./my-skill
 ### Common Issues
 
 **Clippy warnings:**
+
 ```bash
 just clippy
 ```
 
 **Test failures:**
+
 ```bash
 cargo test -- --nocapture
 ```
 
 **Build errors:**
+
 ```bash
 cargo build --verbose
 ```
@@ -350,21 +357,21 @@ cargo build --verbose
 version = "0.1.8"
 ```
 
-2. **Update version** in `src/cli.rs`:
+1. **Update version** in `src/cli.rs`:
 
 ```rust
 #[command(version = "0.1.8")]
 ```
 
-3. **Update README.md** installation instructions
+1. **Update README.md** installation instructions
 
-4. **Run full checks**:
+1. **Run full checks**:
 
 ```bash
 just full
 ```
 
-5. **Commit and tag**:
+1. **Commit and tag**:
 
 ```bash
 git add -A
@@ -373,7 +380,7 @@ git tag v0.1.8
 git push origin main --tags
 ```
 
-6. **GitHub Actions** will build and create release automatically
+1. **GitHub Actions** will build and create release automatically
 
 ---
 
@@ -391,7 +398,7 @@ git push origin main --tags
 
 Follow conventional commits:
 
-```
+```text
 feat: add new validation rule for X
 fix: correct path handling on Windows
 docs: update API reference

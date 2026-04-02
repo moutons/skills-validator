@@ -1,6 +1,9 @@
 ---
 name: "security-ownership-map"
-description: "Analyze git repositories to build a security ownership topology (people-to-file), compute bus factor and sensitive-code ownership, and export CSV/JSON for graph databases and visualization. Trigger only when the user explicitly wants a security-oriented ownership or bus-factor analysis grounded in git history (for example: orphaned sensitive code, security maintainers, CODEOWNERS reality checks for risk, sensitive hotspots, or ownership clusters). Do not trigger for general maintainer lists or non-security ownership questions."
+description:
+  "Analyze git repositories to build a security ownership topology (people-to-file), compute bus factor and sensitive-code ownership, and export CSV/JSON for graph databases and visualization. Trigger only when the user explicitly wants a
+  security-oriented ownership or bus-factor analysis grounded in git history (for example: orphaned sensitive code, security maintainers, CODEOWNERS reality checks for risk, sensitive hotspots, or ownership clusters). Do not trigger for general
+  maintainer lists or non-security ownership questions."
 author: openai
 ---
 
@@ -8,7 +11,8 @@ author: openai
 
 ## Overview
 
-Build a bipartite graph of people and files from git history, then compute ownership risk and export graph artifacts for Neo4j/Gephi. Also build a file co-change graph (Jaccard similarity on shared commits) to cluster files by how they move together while ignoring large, noisy commits.
+Build a bipartite graph of people and files from git history, then compute ownership risk and export graph artifacts for Neo4j/Gephi. Also build a file co-change graph (Jaccard similarity on shared commits) to cluster files by how they move together
+while ignoring large, noisy commits.
 
 ## Requirements
 
@@ -30,7 +34,8 @@ pip install networkx
 5. Query the outputs with `scripts/query_ownership.py` for bounded JSON slices.
 6. Persist and visualize (see `references/neo4j-import.md`).
 
-By default, the co-change graph ignores common “glue” files (lockfiles, `.github/*`, editor config) so clusters reflect actual code movement instead of shared infra edits. Override with `--cochange-exclude` or `--no-default-cochange-excludes`. Dependabot commits are excluded by default; override with `--no-default-author-excludes` or add patterns via `--author-exclude-regex`.
+By default, the co-change graph ignores common “glue” files (lockfiles, `.github/*`, editor config) so clusters reflect actual code movement instead of shared infra edits. Override with `--cochange-exclude` or `--no-default-cochange-excludes`.
+Dependabot commits are excluded by default; override with `--no-default-author-excludes` or add patterns via `--author-exclude-regex`.
 
 If you want to exclude Linux build glue like `Kbuild` from co-change clustering, pass:
 
@@ -166,6 +171,7 @@ python skills/skills/security-ownership-map/scripts/community_maintainers.py \
 ```
 
 Notes:
+
 - Touches default to one authored commit (not per-file). Use `--touch-mode file` to count per-file touches.
 - Use `--window-days 90` or `--weight recency --half-life-days 180` to smooth churn.
 - Filter bots with `--ignore-author-regex '(bot|dependabot)'`.

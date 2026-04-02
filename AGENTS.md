@@ -46,7 +46,7 @@ cargo clippy -- -D warnings
 
 ## Project Structure
 
-```
+```text
 src/
 ├── cli.rs      # CLI argument parsing
 ├── lib.rs      # Public API exports

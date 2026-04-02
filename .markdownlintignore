@@ -6,3 +6,6 @@ node_modules/
 
 # Ignore specific build outputs
 target/
+
+# Test fixtures are third-party skill files, not our prose
+tests/fixtures/

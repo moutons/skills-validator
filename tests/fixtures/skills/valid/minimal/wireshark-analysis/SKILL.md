@@ -1,6 +1,8 @@
 ---
 name: Wireshark Network Traffic Analysis
-description: This skill should be used when the user asks to "analyze network traffic with Wireshark", "capture packets for troubleshooting", "filter PCAP files", "follow TCP/UDP streams", "detect network anomalies", "investigate suspicious traffic", or "perform protocol analysis". It provides comprehensive techniques for network packet capture, filtering, and analysis using Wireshark.
+description:
+  This skill should be used when the user asks to "analyze network traffic with Wireshark", "capture packets for troubleshooting", "filter PCAP files", "follow TCP/UDP streams", "detect network anomalies", "investigate suspicious traffic", or
+  "perform protocol analysis". It provides comprehensive techniques for network packet capture, filtering, and analysis using Wireshark.
 metadata:
   author: zebbern
   version: "1.1"
@@ -10,23 +12,27 @@ metadata:
 
 ## Purpose
 
-Execute comprehensive network traffic analysis using Wireshark to capture, filter, and examine network packets for security investigations, performance optimization, and troubleshooting. This skill enables systematic analysis of network protocols, detection of anomalies, and reconstruction of network conversations from PCAP files.
+Execute comprehensive network traffic analysis using Wireshark to capture, filter, and examine network packets for security investigations, performance optimization, and troubleshooting. This skill enables systematic analysis of network protocols,
+detection of anomalies, and reconstruction of network conversations from PCAP files.
 
 ## Inputs / Prerequisites
 
 ### Required Tools
+
 - Wireshark installed (Windows, macOS, or Linux)
 - Network interface with capture permissions
 - PCAP/PCAPNG files for offline analysis
 - Administrator/root privileges for live capture
 
 ### Technical Requirements
+
 - Understanding of network protocols (TCP, UDP, HTTP, DNS)
 - Familiarity with IP addressing and ports
 - Knowledge of OSI model layers
 - Understanding of common attack patterns
 
 ### Use Cases
+
 - Network troubleshooting and connectivity issues
 - Security incident investigation
 - Malware traffic analysis
@@ -36,6 +42,7 @@ Execute comprehensive network traffic analysis using Wireshark to capture, filte
 ## Outputs / Deliverables
 
 ### Primary Outputs
+
 - Filtered packet captures for specific traffic
 - Reconstructed communication streams
 - Traffic statistics and visualizations
@@ -46,6 +53,7 @@ Execute comprehensive network traffic analysis using Wireshark to capture, filte
 ### Phase 1: Capturing Network Traffic
 
 #### Start Live Capture
+
 Begin capturing packets on network interface:
 
 ```
@@ -56,14 +64,16 @@ Begin capturing packets on network interface:
 ```
 
 #### Capture Controls
-| Action | Shortcut | Description |
-|--------|----------|-------------|
-| Start/Stop Capture | Ctrl+E | Toggle capture on/off |
-| Restart Capture | Ctrl+R | Stop and start new capture |
-| Open PCAP File | Ctrl+O | Load existing capture file |
-| Save Capture | Ctrl+S | Save current capture |
+
+| Action             | Shortcut | Description                |
+| ------------------ | -------- | -------------------------- |
+| Start/Stop Capture | Ctrl+E   | Toggle capture on/off      |
+| Restart Capture    | Ctrl+R   | Stop and start new capture |
+| Open PCAP File     | Ctrl+O   | Load existing capture file |
+| Save Capture       | Ctrl+S   | Save current capture       |
 
 #### Capture Filters
+
 Apply filters before capture to limit data collection:
 
 ```
@@ -86,6 +96,7 @@ host 192.168.1.100 and port 443
 ### Phase 2: Display Filters
 
 #### Basic Filter Syntax
+
 Filter captured packets for analysis:
 
 ```
@@ -102,6 +113,7 @@ tcp.srcport == 22                    # Source port 22
 ```
 
 #### Protocol Filters
+
 Filter by specific protocols:
 
 ```
@@ -118,6 +130,7 @@ smb or smb2                          # SMB file sharing
 ```
 
 #### TCP Flag Filters
+
 Identify specific connection states:
 
 ```
@@ -129,6 +142,7 @@ tcp.flags.syn == 1 && tcp.flags.ack == 0  # SYN-only (initial connection)
 ```
 
 #### Content Filters
+
 Search for specific content:
 
 ```
@@ -138,6 +152,7 @@ tcp contains "GET"                   # TCP packets with string
 ```
 
 #### Analysis Filters
+
 Identify potential issues:
 
 ```
@@ -149,6 +164,7 @@ dns.flags.rcode != 0                 # DNS errors
 ```
 
 #### Combining Filters
+
 Use logical operators for complex queries:
 
 ```
@@ -168,6 +184,7 @@ dns || http
 ### Phase 3: Following Streams
 
 #### TCP Stream Reconstruction
+
 View complete TCP conversation:
 
 ```
@@ -179,14 +196,16 @@ View complete TCP conversation:
 ```
 
 #### Stream Types
-| Stream | Access | Use Case |
-|--------|--------|----------|
-| TCP Stream | Follow > TCP Stream | Web, file transfers, any TCP |
-| UDP Stream | Follow > UDP Stream | DNS, VoIP, streaming |
-| HTTP Stream | Follow > HTTP Stream | Web content, headers |
-| TLS Stream | Follow > TLS Stream | Encrypted traffic (if keys available) |
+
+| Stream      | Access               | Use Case                              |
+| ----------- | -------------------- | ------------------------------------- |
+| TCP Stream  | Follow > TCP Stream  | Web, file transfers, any TCP          |
+| UDP Stream  | Follow > UDP Stream  | DNS, VoIP, streaming                  |
+| HTTP Stream | Follow > HTTP Stream | Web content, headers                  |
+| TLS Stream  | Follow > TLS Stream  | Encrypted traffic (if keys available) |
 
 #### Stream Analysis Tips
+
 - Review request/response pairs
 - Identify transmitted files or data
 - Look for credentials in plaintext
@@ -195,6 +214,7 @@ View complete TCP conversation:
 ### Phase 4: Statistical Analysis
 
 #### Protocol Hierarchy
+
 View protocol distribution:
 
 ```
@@ -208,6 +228,7 @@ Shows:
 ```
 
 #### Conversations
+
 Analyze communication pairs:
 
 ```
@@ -221,6 +242,7 @@ Tabs:
 ```
 
 #### Endpoints
+
 View active network participants:
 
 ```
@@ -233,6 +255,7 @@ Shows:
 ```
 
 #### Flow Graph
+
 Visualize packet sequence:
 
 ```
@@ -245,6 +268,7 @@ Options:
 ```
 
 #### I/O Graphs
+
 Plot traffic over time:
 
 ```
@@ -260,6 +284,7 @@ Features:
 ### Phase 5: Security Analysis
 
 #### Detect Port Scanning
+
 Identify reconnaissance activity:
 
 ```
@@ -271,6 +296,7 @@ ip.src == SUSPECT_IP && tcp.flags.syn == 1
 ```
 
 #### Identify Suspicious Traffic
+
 Filter for anomalies:
 
 ```
@@ -288,6 +314,7 @@ frame.len > 1400
 ```
 
 #### ARP Spoofing Detection
+
 Identify ARP attacks:
 
 ```
@@ -304,6 +331,7 @@ arp
 ```
 
 #### Examine Downloads
+
 Analyze file transfers:
 
 ```
@@ -315,6 +343,7 @@ http.request.method == "GET" && http contains "Content-Disposition"
 ```
 
 #### DNS Analysis
+
 Investigate DNS activity:
 
 ```
@@ -337,6 +366,7 @@ dns.qry.name contains "domain.com"
 ### Phase 6: Expert Information
 
 #### Access Expert Analysis
+
 View Wireshark's automated findings:
 
 ```
@@ -350,32 +380,35 @@ Categories:
 ```
 
 #### Common Expert Findings
-| Finding | Meaning | Action |
-|---------|---------|--------|
-| TCP Retransmission | Packet resent | Check for packet loss |
-| Duplicate ACK | Possible loss | Investigate network path |
-| Zero Window | Buffer full | Check receiver performance |
-| RST | Connection reset | Check for blocks/errors |
-| Out-of-Order | Packets reordered | Usually normal, excessive is issue |
+
+| Finding            | Meaning           | Action                             |
+| ------------------ | ----------------- | ---------------------------------- |
+| TCP Retransmission | Packet resent     | Check for packet loss              |
+| Duplicate ACK      | Possible loss     | Investigate network path           |
+| Zero Window        | Buffer full       | Check receiver performance         |
+| RST                | Connection reset  | Check for blocks/errors            |
+| Out-of-Order       | Packets reordered | Usually normal, excessive is issue |
 
 ## Quick Reference
 
 ### Keyboard Shortcuts
-| Action | Shortcut |
-|--------|----------|
-| Open file | Ctrl+O |
-| Save file | Ctrl+S |
-| Start/Stop capture | Ctrl+E |
-| Find packet | Ctrl+F |
-| Go to packet | Ctrl+G |
-| Next packet | ↓ |
-| Previous packet | ↑ |
-| First packet | Ctrl+Home |
-| Last packet | Ctrl+End |
-| Apply filter | Enter |
-| Clear filter | Ctrl+Shift+X |
+
+| Action             | Shortcut     |
+| ------------------ | ------------ |
+| Open file          | Ctrl+O       |
+| Save file          | Ctrl+S       |
+| Start/Stop capture | Ctrl+E       |
+| Find packet        | Ctrl+F       |
+| Go to packet       | Ctrl+G       |
+| Next packet        | ↓            |
+| Previous packet    | ↑            |
+| First packet       | Ctrl+Home    |
+| Last packet        | Ctrl+End     |
+| Apply filter       | Enter        |
+| Clear filter       | Ctrl+Shift+X |
 
 ### Common Filter Reference
+
 ```
 # Web traffic
 http || https
@@ -383,7 +416,7 @@ http || https
 # Email
 smtp || pop || imap
 
-# File sharing  
+# File sharing
 smb || smb2 || ftp
 
 # Authentication
@@ -397,6 +430,7 @@ tls || ssl
 ```
 
 ### Export Options
+
 ```
 File > Export Specified Packets    # Save filtered subset
 File > Export Objects > HTTP       # Extract HTTP files
@@ -406,18 +440,21 @@ File > Export Packet Dissections   # Export as text/CSV
 ## Constraints and Guardrails
 
 ### Operational Boundaries
+
 - Capture only authorized network traffic
 - Handle captured data according to privacy policies
 - Avoid capturing sensitive credentials unnecessarily
 - Properly secure PCAP files containing sensitive data
 
 ### Technical Limitations
+
 - Large captures consume significant memory
 - Encrypted traffic content not visible without keys
 - High-speed networks may drop packets
 - Some protocols require plugins for full decoding
 
 ### Best Practices
+
 - Use capture filters to limit data collection
 - Save captures regularly during long sessions
 - Use display filters rather than deleting packets
@@ -452,6 +489,7 @@ File > Export Packet Dissections   # Export as text/CSV
 ```
 
 **Indicators**:
+
 - Regular timing intervals
 - Encoded/encrypted payloads
 - Unusual ports or protocols
@@ -473,24 +511,28 @@ File > Export Packet Dissections   # Export as text/CSV
 ## Troubleshooting
 
 ### No Packets Captured
+
 - Verify correct interface selected
 - Check for admin/root permissions
 - Confirm network adapter is active
 - Disable promiscuous mode if issues persist
 
 ### Filter Not Working
+
 - Verify filter syntax (red = error)
 - Check for typos in field names
 - Use Expression button for valid fields
 - Clear filter and rebuild incrementally
 
 ### Performance Issues
+
 - Use capture filters to limit traffic
 - Split large captures into smaller files
 - Disable name resolution during capture
 - Close unnecessary protocol dissectors
 
 ### Cannot Decrypt TLS/SSL
+
 - Obtain server private key
 - Configure at Edit > Preferences > Protocols > TLS
 - For ephemeral keys, capture pre-master secret from browser

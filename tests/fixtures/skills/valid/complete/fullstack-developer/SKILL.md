@@ -18,6 +18,7 @@ You are an expert full-stack web developer specializing in modern JavaScript/Typ
 ## When to Apply
 
 Use this skill when:
+
 - Building complete web applications
 - Developing REST or GraphQL APIs
 - Creating React/Next.js frontends
@@ -29,6 +30,7 @@ Use this skill when:
 ## Technology Stack
 
 ### Frontend
+
 - **React** - Modern component patterns, hooks, context
 - **Next.js** - SSR, SSG, API routes, App Router
 - **TypeScript** - Type-safe frontend code
@@ -36,6 +38,7 @@ Use this skill when:
 - **State Management** - React Query, Zustand, Context API
 
 ### Backend
+
 - **Node.js** - Express, Fastify, or Next.js API routes
 - **TypeScript** - Type-safe backend code
 - **Authentication** - JWT, OAuth, session management
@@ -43,12 +46,14 @@ Use this skill when:
 - **API Design** - RESTful principles, GraphQL
 
 ### Database
+
 - **PostgreSQL** - Relational data, complex queries
 - **MongoDB** - Document storage, flexible schemas
 - **Prisma** - Type-safe ORM
 - **Redis** - Caching, sessions
 
 ### DevOps
+
 - **Vercel / Netlify** - Deployment for Next.js/React
 - **Docker** - Containerization
 - **GitHub Actions** - CI/CD pipelines
@@ -56,6 +61,7 @@ Use this skill when:
 ## Architecture Patterns
 
 ### Frontend Architecture
+
 ```
 src/
 ├── app/              # Next.js app router pages
@@ -69,6 +75,7 @@ src/
 ```
 
 ### Backend Architecture
+
 ```
 src/
 ├── routes/          # API route handlers
@@ -83,6 +90,7 @@ src/
 ## Best Practices
 
 ### Frontend
+
 1. **Component Design**
    - Keep components small and focused
    - Use composition over prop drilling
@@ -102,6 +110,7 @@ src/
    - Avoid prop drilling
 
 ### Backend
+
 1. **API Design**
    - RESTful naming conventions
    - Proper HTTP status codes
@@ -124,11 +133,12 @@ src/
 ## Code Examples
 
 ### Next.js API Route with TypeScript
+
 ```typescript
 // app/api/users/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { db } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { db } from "@/lib/db";
 
 const createUserSchema = z.object({
   email: z.string().email(),
@@ -139,32 +149,27 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const data = createUserSchema.parse(body);
-    
+
     const user = await db.user.create({
       data: {
         email: data.email,
         name: data.name,
       },
     });
-    
+
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input", details: error.errors }, { status: 400 });
     }
-    
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 ```
 
 ### React Component with Hooks
+
 ```typescript
 // components/UserProfile.tsx
 'use client';
@@ -183,10 +188,10 @@ export function UserProfile({ userId }: { userId: string }) {
     queryKey: ['user', userId],
     queryFn: () => fetch(`/api/users/${userId}`).then(r => r.json()),
   });
-  
+
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error loading user</div>;
-  
+
   return (
     <div className="p-4 border rounded-lg">
       <h2 className="text-xl font-bold">{user.name}</h2>
@@ -199,6 +204,7 @@ export function UserProfile({ userId }: { userId: string }) {
 ## Output Format
 
 When building features, provide:
+
 1. **File structure** - Show where code should go
 2. **Complete code** - Fully functional, typed code
 3. **Dependencies** - Required npm packages
@@ -213,16 +219,16 @@ When building features, provide:
 
 ```typescript
 // lib/db.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 export const db = new PrismaClient();
 ```
 
 ```typescript
 // app/api/posts/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { db } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { db } from "@/lib/db";
 
 const createPostSchema = z.object({
   title: z.string().min(1).max(200),
@@ -233,9 +239,9 @@ const createPostSchema = z.object({
 export async function GET() {
   const posts = await db.post.findMany({
     include: { author: true },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
-  
+
   return NextResponse.json(posts);
 }
 
@@ -243,36 +249,32 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const data = createPostSchema.parse(body);
-    
+
     const post = await db.post.create({
       data,
       include: { author: true },
     });
-    
+
     return NextResponse.json(post, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid input", details: error.errors }, { status: 400 });
     }
-    
-    return NextResponse.json(
-      { error: 'Failed to create post' },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: "Failed to create post" }, { status: 500 });
   }
 }
 ```
 
 **Dependencies:**
+
 ```bash
 npm install @prisma/client zod
 npm install -D prisma
 ```
 
 **Prisma Schema:**
+
 ```prisma
 model Post {
   id        String   @id @default(cuid())
@@ -286,6 +288,7 @@ model Post {
 ```
 
 **Setup:**
+
 ```bash
 # Initialize Prisma
 npx prisma init
@@ -296,4 +299,3 @@ npx prisma migrate dev --name init
 # Generate Prisma client
 npx prisma generate
 ```
-

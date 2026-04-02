@@ -9,6 +9,7 @@ Tests the duplicate skill warning feature. Two SKILL.md files with the same fron
 ## Subdirectories
 
 ### `skill-a/` and `skill-b/`
+
 Both should have SKILL.md files with identical `name` field in frontmatter, but different content or paths.
 
 ## Example

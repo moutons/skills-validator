@@ -209,3 +209,56 @@ fn test_validate_not_a_directory() {
     assert!(!result.errors.is_empty());
     assert!(result.errors.iter().any(|e| e.contains("Not a directory")));
 }
+
+#[test]
+fn test_validate_body_too_long_warning() {
+    let long_body = (0..=501)
+        .map(|i| format!("Line {}\n", i))
+        .collect::<String>();
+    let content = format!(
+        "---\nname: test-skill\ndescription: Test\n---\n{}",
+        long_body
+    );
+    let dir = TempDir::new().unwrap();
+    let path = make_skill(&dir, "test-skill", &content);
+    let result = skills_validator::validator::validate(&path);
+    assert!(result.errors.is_empty());
+    assert!(result.warnings.iter().any(|w| w.contains("502 lines")));
+}
+
+#[test]
+fn test_validate_windows_path_warning() {
+    let dir = TempDir::new().unwrap();
+    let path = make_skill(
+        &dir,
+        "test-skill",
+        "---\nname: test-skill\ndescription: Test\n---\nC:\\Users\\test\\file.md",
+    );
+    let result = skills_validator::validator::validate(&path);
+    assert!(result.errors.is_empty());
+    assert!(result
+        .warnings
+        .iter()
+        .any(|w| w.contains("Windows-style path")));
+}
+
+#[test]
+fn test_validate_script_in_root_warning() {
+    use std::fs;
+    let dir = TempDir::new().unwrap();
+    let skill_path = dir.path().join("test-skill");
+    fs::create_dir_all(&skill_path).unwrap();
+    fs::write(
+        skill_path.join("SKILL.md"),
+        "---\nname: test-skill\ndescription: Test\n---\ncontent",
+    )
+    .unwrap();
+    fs::write(skill_path.join("script.sh"), "#!/bin/bash\necho hello").unwrap();
+
+    let result = skills_validator::validator::validate(&skill_path);
+    assert!(result.errors.is_empty());
+    assert!(result
+        .warnings
+        .iter()
+        .any(|w| w.contains("Script file") && w.contains("script.sh")));
+}

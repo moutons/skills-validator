@@ -1,3 +1,5 @@
+#![allow(clippy::only_used_in_recursion)]
+
 use std::path::Path;
 use unicode_normalization::UnicodeNormalization;
 
@@ -6,6 +8,7 @@ use crate::parser::{find_skill_md, parse_frontmatter_and_body};
 const MAX_SKILL_NAME_LENGTH: usize = 64;
 const MAX_DESCRIPTION_LENGTH: usize = 1024;
 const MAX_COMPATIBILITY_LENGTH: usize = 500;
+const MAX_SKILL_BODY_LINES: usize = 500;
 
 const ALLOWED_FIELDS: &[&str] = &[
     "name",
@@ -259,6 +262,98 @@ fn validate_content_keywords(body: &str) -> ValidationResult {
     result
 }
 
+fn validate_body_length(body: &str) -> ValidationResult {
+    let mut result = ValidationResult::new();
+
+    let line_count = body.lines().count();
+    if line_count > MAX_SKILL_BODY_LINES {
+        result.warnings.push(format!(
+            "SKILL.md body has {} lines (recommended: {} or fewer). Consider using progressive disclosure patterns to keep skills focused. See https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#progressive-disclosure-patterns",
+            line_count, MAX_SKILL_BODY_LINES
+        ));
+    }
+
+    result
+}
+
+fn validate_windows_paths(skill_dir: &Path) -> ValidationResult {
+    let mut result = ValidationResult::new();
+
+    fn check_directory(dir: &Path, result: &mut ValidationResult) {
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+
+                if path.is_file() {
+                    if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                        if ext == "md"
+                            || ext == "txt"
+                            || ext == "yaml"
+                            || ext == "yml"
+                            || ext == "json"
+                            || ext == "toml"
+                        {
+                            if let Ok(content) = std::fs::read_to_string(&path) {
+                                for (line_num, line) in content.lines().enumerate() {
+                                    let line_lower = line.to_lowercase();
+                                    if (line_lower.contains(":\\") || line_lower.contains(":/"))
+                                        && line_lower.contains(":\\")
+                                    {
+                                        result.warnings.push(format!(
+                                                "Windows-style path found in {} (line {}). Use forward slashes for cross-platform compatibility. See https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#avoid-windows-style-paths",
+                                                path.file_name().unwrap_or_default().to_string_lossy(),
+                                                line_num + 1
+                                            ));
+                                        break;
+                                    }
+                                    if line.contains("\\\\") {
+                                        result.warnings.push(format!(
+                                            "UNC path found in {} (line {}). Use forward slashes for cross-platform compatibility. See https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#avoid-windows-style-paths",
+                                            path.file_name().unwrap_or_default().to_string_lossy(),
+                                            line_num + 1
+                                        ));
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else if path.is_dir() {
+                    check_directory(&path, result);
+                }
+            }
+        }
+    }
+
+    check_directory(skill_dir, &mut result);
+
+    result
+}
+
+fn validate_no_scripts_in_base(skill_dir: &Path) -> ValidationResult {
+    let mut result = ValidationResult::new();
+
+    let script_extensions = ["sh", "py", "ps1", "bat", "cmd"];
+
+    if let Ok(entries) = std::fs::read_dir(skill_dir) {
+        for entry in entries.filter_map(|e| e.ok()) {
+            let path = entry.path();
+            if path.is_file() {
+                if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+                    if script_extensions.contains(&ext) {
+                        result.warnings.push(format!(
+                            "Script file '{}' found in skill root directory. Consider organizing scripts in a dedicated directory. See https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#level-3-resources-and-code-loaded-as-needed and https://agentskills.io/specification#optional-directories",
+                            path.file_name().unwrap_or_default().to_string_lossy()
+                        ));
+                    }
+                }
+            }
+        }
+    }
+
+    result
+}
+
 pub fn validate(skill_dir: &Path) -> ValidationResult {
     let skill_dir = skill_dir.to_path_buf();
     let mut result = ValidationResult::new();
@@ -296,11 +391,20 @@ pub fn validate(skill_dir: &Path) -> ValidationResult {
 
                 let keyword_result = validate_content_keywords(&body);
                 result.warnings.extend(keyword_result.warnings);
+
+                let body_length_result = validate_body_length(&body);
+                result.warnings.extend(body_length_result.warnings);
             }
             Err(e) => result.errors.push(e.to_string()),
         },
         Err(e) => result.errors.push(e.to_string()),
     }
+
+    let windows_path_result = validate_windows_paths(&skill_dir);
+    result.warnings.extend(windows_path_result.warnings);
+
+    let scripts_result = validate_no_scripts_in_base(&skill_dir);
+    result.warnings.extend(scripts_result.warnings);
 
     result
 }

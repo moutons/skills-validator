@@ -6,7 +6,9 @@ use std::path::Path;
 use std::process;
 
 use crate::parser::read_properties;
+use crate::paths::PathsConfig;
 use crate::prompt::to_prompt;
+use crate::scan::{find_duplicates, scan, ScanOptions};
 use crate::validator::validate;
 
 #[derive(Parser)]
@@ -24,11 +26,13 @@ COMMANDS:
     validate         Validate a skill directory against the Agent Skills spec
     read-properties Parse and output skill frontmatter as YAML
     to-prompt       Generate <available_skills> XML for agent prompts
+    scan            Scan for skills across multiple tool directories
 
 EXAMPLES:
     skills-validator validate ~/.agents/skills/my-skill
     skills-validator read-properties ~/.agents/skills/rust
     skills-validator to-prompt ~/.agents/skills/*
+    skills-validator scan --all
 
 LOG LEVELS:
     error   - Show only errors
@@ -61,35 +65,49 @@ struct Cli {
 #[command(arg_required_else_help = true)]
 enum Commands {
     /// Validate a skill directory
-    ///
-    /// Checks SKILL.md frontmatter against the Agent Skills specification.
-    /// Returns exit code 0 if valid, 1 if errors found.
-    ///
-    /// Warnings are issued for:
-    /// - Non-spec Claude Code extension fields
-    /// - Missing content keywords (never, always, when, example)
     Validate {
         /// Path to the skill directory
         path: String,
     },
 
     /// Read and output skill properties as YAML
-    ///
-    /// Parses SKILL.md frontmatter and outputs the properties.
-    /// Does not perform validation - use 'validate' command for that.
     ReadProperties {
         /// Path to the skill directory
         path: String,
     },
 
     /// Generate <available_skills> XML for agent prompts
-    ///
-    /// Creates an XML block listing all specified skills with their
-    /// names, descriptions, and file locations for system prompts.
     ToPrompt {
         /// Paths to skill directories (one or more)
         #[arg(required = true)]
         paths: Vec<String>,
+    },
+
+    /// Scan for skills across multiple tool directories
+    Scan {
+        /// Scan all locations (default: $CWD→repo root + $HOME)
+        #[arg(long, group = "scan_scope")]
+        all: bool,
+
+        /// Scan $HOME for all tool directories
+        #[arg(long, group = "scan_scope")]
+        user: bool,
+
+        /// Scan $CWD→repo root (requires git repo)
+        #[arg(long, group = "scan_scope")]
+        repo: bool,
+
+        /// Comma-separated tool names to scan
+        #[arg(long, value_delimiter = ',')]
+        tool: Vec<String>,
+
+        /// Discover paths without validating
+        #[arg(long)]
+        dry_run: bool,
+
+        /// Show detailed output per skill
+        #[arg(long)]
+        verbose: bool,
     },
 }
 
@@ -174,7 +192,6 @@ pub fn run() {
             let path = Path::new(&path);
             let result = validate(path);
 
-            // When --json is passed, output result as JSON to stderr
             if cli.json {
                 let json_result = serde_json::json!({
                     "valid": result.errors.is_empty(),
@@ -190,7 +207,6 @@ pub fn run() {
                 }
             }
 
-            // Text output mode
             for warning in &result.warnings {
                 log::warn!("{}", warning);
             }
@@ -215,7 +231,6 @@ pub fn run() {
                 Ok(props) => {
                     log::debug!("Read properties from {:?}", path);
                     let yaml = serde_yaml::to_string(&props.to_dict()).unwrap();
-                    // YAML output goes to stdout (data)
                     print!("{}", yaml);
                 }
                 Err(e) => {
@@ -228,8 +243,81 @@ pub fn run() {
             log::debug!("Generating prompt for {} skills", paths.len());
             let refs: Vec<&str> = paths.iter().map(|s| s.as_str()).collect();
             let prompt = to_prompt(&refs);
-            // XML output goes to stdout (data)
             println!("{}", prompt);
+        }
+        Commands::Scan {
+            all,
+            user,
+            repo,
+            tool,
+            dry_run,
+            verbose,
+        } => {
+            // Validate tool names if specified
+            let config = match PathsConfig::load() {
+                Ok(c) => c,
+                Err(e) => {
+                    log::error!("Failed to load paths configuration: {}", e);
+                    process::exit(2);
+                }
+            };
+
+            if !tool.is_empty() {
+                for t in &tool {
+                    if !config.has_tool(t) {
+                        log::error!("Unknown tool: {}", t);
+                        log::info!("Available tools: {}", config.tool_names().join(", "));
+                        process::exit(2);
+                    }
+                }
+            }
+
+            if dry_run {
+                println!(
+                    "Dry run - would scan with options: all={}, user={}, repo={}, tools={:?}",
+                    all, user, repo, tool
+                );
+                return;
+            }
+
+            // Perform the scan
+            let result = scan(&ScanOptions {
+                all,
+                user,
+                repo,
+                tools: tool,
+                verbose,
+            });
+
+            // Output results
+            println!("\n=== Scan Results ===");
+            println!("Total skills found: {}", result.total_skills);
+            println!("Valid: {}", result.valid_count);
+            println!("Invalid: {}", result.invalid_count);
+            println!("Warnings: {}", result.warning_count);
+
+            // Check for duplicates
+            let duplicates = find_duplicates(&result);
+            if !duplicates.is_empty() {
+                println!("\n=== Duplicate Skills Found ===");
+                for dup_group in &duplicates {
+                    let name = dup_group[0]
+                        .skill
+                        .directory
+                        .file_name()
+                        .map(|n| n.to_string_lossy().to_string())
+                        .unwrap_or_else(|| "unknown".to_string());
+                    println!("Duplicate: {}", name);
+                    for dup in dup_group {
+                        println!("  - {:?}", dup.skill.directory);
+                    }
+                }
+            }
+
+            // Set exit code based on results
+            if result.invalid_count > 0 {
+                process::exit(1);
+            }
         }
     }
 }

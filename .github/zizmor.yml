@@ -6,10 +6,10 @@ rules:
   cache-poisoning:
     ignore:
       - ci.yml:34
-      - ci.yml:80
-      - ci.yml:110
-      - ci.yml:141
-      - ci.yml:177
+      - ci.yml:82
+      - ci.yml:112
+      - ci.yml:143
+      - ci.yml:179
   dangerous-triggers:
     ignore:
       - release-plz.yml

@@ -1,0 +1,11 @@
+# Ignore dependency folders
+node_modules/
+
+# Ignore your specific hidden folder
+.opencode/
+
+# Ignore specific build outputs
+target/
+
+# Test fixtures are third-party skill files, not our prose
+tests/fixtures/

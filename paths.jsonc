@@ -1,0 +1,258 @@
+{
+  // These are the documented paths for each tool as of 2026-02-15
+  // Order of precedence per-client isn't indicated... getting these at all was annoying enough
+  
+  "agents": {
+    "name": "Agents",
+    "documentation": null,
+    "directories": [
+      "$HOME/.agents/skills/",
+      "$REPO_ROOT/.agents/skills/"
+    ]
+  },
+  
+  "agents-less-compatible": {
+    "name": "Agents less compatible",
+    "documentation": null,
+    "directories": [
+      "$HOME/.config/agents/skills/"
+    ]
+  },
+  
+  "amp": {
+    "name": "Amp",
+    "documentation": "https://ampcode.com/news/agent-skills",
+    "directories": [
+      "$REPO_ROOT/.agents/skills",
+      "$HOME/.config/amp/skills/",
+      "$REPO_ROOT/.claude/skills",
+      "$HOME/.claude/skills"
+    ]
+  },
+  
+  "autohand": {
+    "name": "Autohand",
+    "documentation": "https://autohand.ai/docs/working-with-autohand-code/agent-skills",
+    "directories": [
+      "$HOME/.autohand/skills/",
+      "$HOME/.claude/skills/",
+      "$HOME/.codex/skills/",
+      "$REPO_ROOT/.autohand/skills/",
+      "$REPO_ROOT/.claude/skills/"
+    ]
+  },
+  
+  "cline": {
+    "name": "Cline",
+    "documentation": "https://docs.cline.bot/customization/skills#where-skills-live",
+    "directories": [
+      "$REPO_ROOT/.cline/skills",
+      "$REPO_ROOT/.clinerules/skills",
+      "$REPO_ROOT/.claude/skills/",
+      "$HOME/.cline/skills/"
+    ]
+  },
+  
+  "claude-code": {
+    "name": "Claude Code",
+    "documentation": "https://code.claude.com/docs/en/skills#where-skills-live",
+    "directories": [
+      "$HOME/.claude/skills/",
+      "$REPO_ROOT/.claude/skills/"
+    ]
+  },
+  
+  "cursor": {
+    "name": "Cursor",
+    "documentation": "https://cursor.com/docs/context/skills#skill-directories",
+    "directories": [
+      "$HOME/.cursor/skills/",
+      "$HOME/.claude/skills/",
+      "$HOME/.codex/skills/",
+      "$REPO_ROOT/.cursor/skills/",
+      "$REPO_ROOT/.claude/skills/",
+      "$REPO_ROOT/.codex/skills/"
+    ]
+  },
+  
+  "firebender": {
+    "name": "Firebender",
+    "documentation": "https://docs.firebender.com/multi-agent/skills#skill-locations",
+    "directories": [
+      "$HOME/.firebender/skills/",
+      "$REPO_ROOT/.firebender/skills/"
+    ]
+  },
+  
+  "gemini-cli": {
+    "name": "Gemini CLI",
+    "documentation": "https://geminicli.com/docs/cli/skills/#skill-discovery-tiers",
+    "directories": [
+      "$REPO_ROOT/.gemini/skills",
+      "$HOME/.gemini/skills/"
+    ]
+  },
+  
+  "github-copilot": {
+    "name": "GitHub Copilot",
+    "documentation": "https://docs.github.com/en/copilot/concepts/agents/about-agent-skills#creating-and-adding-skills",
+    "directories": [
+      "$HOME/.copilot/skills/",
+      "$HOME/.claude/skills/",
+      "$REPO_ROOT/.github/skills",
+      "$REPO_ROOT/.claude/skills/"
+    ]
+  },
+  
+  "goose": {
+    "name": "Goose",
+    "documentation": "https://block.github.io/goose/docs/guides/context-engineering/using-skills/",
+    "directories": [
+      "$HOME/.claude/skills/",
+      "$HOME/.config/goose/skills/",
+      "$HOME/.config/agents/skills/",
+      "$REPO_ROOT/.claude/skills",
+      "$REPO_ROOT/.goose/skills/",
+      "$REPO_ROOT/.agents/skills/"
+    ]
+  },
+  
+  "google-antigravity": {
+    "name": "Google Antigravity",
+    "documentation": "https://antigravity.google/docs/skills",
+    "directories": [
+      "$REPO_ROOT/.agent/skills/",
+      "$HOME/.gemini/antigravity/skills/"
+    ]
+  },
+  
+  "kilo-code": {
+    "name": "Kilo Code",
+    "documentation": "https://kilo.ai/docs/code-with-ai/platforms/cli#configuration",
+    "directories": [
+      "$HOME/.kilocode/skills",
+      "$REPO_ROOT/.kilocode/skills"
+    ]
+  },
+  
+  "kiro": {
+    "name": "Kiro",
+    "documentation": "https://kiro.dev/docs/skills/#skill-scope",
+    "directories": [
+      "$REPO_ROOT/.kiro/skills",
+      "$HOME/.kiro/skills/"
+    ]
+  },
+  
+  "mistral-vibe": {
+    "name": "Mistral Vibe",
+    "documentation": "https://docs.mistral.ai/mistral-vibe/agents-skills#skill-discovery",
+    "directories": [
+      "$HOME/.vibe/skills/",
+      "$REPO_ROOT/.vibe/skills/"
+    ]
+  },
+  
+  "mux": {
+    "name": "Mux",
+    "documentation": "https://mux.coder.com/agents/agent-skills",
+    "directories": [
+      "$REPO_ROOT/.mux/skills/",
+      "$HOME/.mux/skills/",
+      "$HOME/.agents/skills/"
+    ]
+  },
+  
+  "opencode": {
+    "name": "OpenCode",
+    "documentation": "https://opencode.ai/docs/skills/",
+    "directories": [
+      "$HOME/.config/opencode/skills/",
+      "$HOME/.opencode/skills/",
+      "$REPO_ROOT/.opencode/skills/",
+      "$HOME/.agents/skills/",
+      "$REPO_ROOT/.agents/skills/"
+    ]
+  },
+  
+  "openai-codex": {
+    "name": "OpenAI Codex",
+    "documentation": "https://developers.openai.com/codex/skills/",
+    "directories": [
+      "$REPO_ROOT/.agents/skills",
+      "$HOME/.codex/skills/",
+      "$CWD/.agents/skills",
+      "$HOME/.agents/skills/",
+      "/etc/codex/skills"
+    ]
+  },
+  
+  "roo-code": {
+    "name": "Roo Code",
+    "documentation": "https://docs.roocode.com/features/skills#skill-specification",
+    "directories": [
+      "$REPO_ROOT/.roo/skills/",
+      "$HOME/.roo/skills/"
+    ]
+  },
+  
+  "trae": {
+    "name": "TRAE",
+    "documentation": "https://docs.trae.ai/ide/skills?_lang=en",
+    "directories": [
+      "$REPO_ROOT/.trae/skills/",
+      "$HOME/.trae/skills/"
+    ]
+  },
+  
+  "warp": {
+    "name": "Warp",
+    "documentation": "https://docs.warp.dev/agent-platform/capabilities/skills#skill-locations",
+    "directories": [
+      "$REPO_ROOT/.agents/skills",
+      "$REPO_ROOT/.warp/skills",
+      "$REPO_ROOT/.claude/skills",
+      "$REPO_ROOT/.codex/skills",
+      "$REPO_ROOT/.cursor/skills",
+      "$REPO_ROOT/.gemini/skills",
+      "$REPO_ROOT/.copilot/skills",
+      "$REPO_ROOT/.factory/skills",
+      "$REPO_ROOT/.github/skills",
+      "$REPO_ROOT/.opencode/skills",
+      "$HOME/.agents/skills",
+      "$HOME/.warp/skills",
+      "$HOME/.claude/skills",
+      "$HOME/.codex/skills",
+      "$HOME/.cursor/skills",
+      "$HOME/.gemini/skills",
+      "$HOME/.copilot/skills",
+      "$HOME/.factory/skills",
+      "$HOME/.github/skills",
+      "$HOME/.opencode/skills"
+    ]
+  },
+  
+  "windsurf": {
+    "name": "Windsurf",
+    "documentation": "https://docs.windsurf.com/windsurf/cascade/skills",
+    "directories": [
+      "$REPO_ROOT/.windsurf/skills/",
+      "$HOME/.codeium/windsurf/skills/"
+    ]
+  },
+  
+  // Tools that do not support skills per their available documentation as of 2026-02-15
+  "_unsupported": {
+    "aider": { "name": "Aider", "documentation": null, "directories": [] },
+    "amazon-q": { "name": "Amazon Q", "documentation": null, "directories": [] },
+    "bolt-new": { "name": "Bolt.new", "documentation": null, "directories": [] },
+    "continue-dev": { "name": "Continue.dev", "documentation": null, "directories": [] },
+    "jetbrains-junie": { "name": "JetBrains Junie", "documentation": null, "directories": [] },
+    "lovable": { "name": "Lovable", "documentation": null, "directories": [] },
+    "pearai": { "name": "PearAI", "documentation": null, "directories": [] },
+    "replit-agent": { "name": "Replit Agent", "documentation": null, "directories": [] },
+    "vercel-v0": { "name": "Vercel v0", "documentation": null, "directories": [] },
+    "void": { "name": "Void", "documentation": null, "directories": [] },
+    "zed": { "name": "Zed", "documentation": null, "directories": [] }
+  }
+}

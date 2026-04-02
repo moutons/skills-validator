@@ -1,0 +1,5 @@
+# Ignore dependency directories
+node_modules/
+
+# Ignore custom hidden directories
+.opencode/

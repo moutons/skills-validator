@@ -1,4 +1,5 @@
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
+use clap_complete::{generate, Shell};
 use log::LevelFilter;
 use owo_colors::OwoColorize;
 use std::io::{IsTerminal, Write};
@@ -81,6 +82,15 @@ enum Commands {
         /// Paths to skill directories (one or more)
         #[arg(required = true)]
         paths: Vec<String>,
+    },
+
+    /// Write default config to XDG config directory
+    Setup,
+
+    /// Generate shell completions
+    Completions {
+        /// Shell to generate completions for (bash, zsh, fish, elvish, powershell)
+        shell: Shell,
     },
 
     /// Scan for skills across multiple tool directories
@@ -244,6 +254,20 @@ pub fn run() {
             let refs: Vec<&str> = paths.iter().map(|s| s.as_str()).collect();
             let prompt = to_prompt(&refs);
             println!("{}", prompt);
+        }
+        Commands::Setup => match crate::config::setup() {
+            Ok(path) => {
+                println!("Config file written to {}", path.display());
+            }
+            Err(e) => {
+                log::error!("{}", e);
+                process::exit(1);
+            }
+        },
+        Commands::Completions { shell } => {
+            let mut cmd = Cli::command();
+            let name = cmd.get_name().to_string();
+            generate(shell, &mut cmd, name, &mut std::io::stdout());
         }
         Commands::Scan {
             all,

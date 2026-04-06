@@ -157,6 +157,10 @@ pub enum CheckName {
     #[serde(rename = "semgrep-execution-failed")]
     SemgrepExecutionFailed,
 
+    // Config
+    #[serde(rename = "config-invalid")]
+    ConfigInvalid,
+
     // Pipeline
     #[serde(rename = "pipeline-error")]
     PipelineError,

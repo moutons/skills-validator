@@ -2,6 +2,7 @@ pub mod cli;
 pub mod config;
 pub mod discovery;
 pub mod error;
+pub mod formatter;
 pub mod git;
 pub mod models;
 pub mod parser;

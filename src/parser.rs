@@ -5,11 +5,9 @@ use crate::error::SkillError;
 use crate::models::SkillProperties;
 
 pub fn find_skill_md(skill_dir: &Path) -> Option<std::path::PathBuf> {
-    for name in &["SKILL.md", "skill.md"] {
-        let path = skill_dir.join(name);
-        if path.exists() {
-            return Some(path);
-        }
+    let path = skill_dir.join("SKILL.md");
+    if path.exists() {
+        return Some(path);
     }
     None
 }

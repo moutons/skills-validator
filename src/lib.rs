@@ -5,6 +5,7 @@ pub mod error;
 pub mod git;
 pub mod models;
 pub mod parser;
+pub mod passes;
 pub mod paths;
 pub mod prompt;
 pub mod scan;

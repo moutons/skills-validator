@@ -7,6 +7,7 @@ pub mod models;
 pub mod parser;
 pub mod passes;
 pub mod paths;
+pub mod pipeline;
 pub mod prompt;
 pub mod scan;
 pub mod validator;

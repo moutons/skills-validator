@@ -203,8 +203,10 @@ fn test_file_entry_construction() {
     let entry = FileEntry {
         path: PathBuf::from("scripts/setup.sh"),
         file_type: FileType::Script,
+        size_bytes: 1024,
     };
     assert_eq!(entry.file_type, FileType::Script);
+    assert_eq!(entry.size_bytes, 1024);
 }
 
 // === SkillContext tests ===

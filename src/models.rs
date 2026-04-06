@@ -1,3 +1,7 @@
+// New pipeline types are defined ahead of their consumers (Tasks 2-10).
+// Remove this allow as consuming code is added.
+#![allow(dead_code)]
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -230,6 +234,7 @@ pub enum FileType {
 pub struct FileEntry {
     pub path: PathBuf,
     pub file_type: FileType,
+    pub size_bytes: u64,
 }
 
 // ---------------------------------------------------------------------------
@@ -238,7 +243,7 @@ pub struct FileEntry {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SkillContext {
-    // Pass 1: Parse
+    // Pass 1: Parse — raw YAML value; will be refined to a typed Frontmatter struct in Task 3
     pub frontmatter: serde_yaml::Value,
     pub headings: Vec<Heading>,
     pub links: Vec<Link>,

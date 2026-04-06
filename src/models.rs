@@ -1,7 +1,3 @@
-// New pipeline types are defined ahead of their consumers (Tasks 2-10).
-// Remove this allow as consuming code is added.
-#![allow(dead_code)]
-
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::path::PathBuf;
@@ -17,6 +13,34 @@ pub enum Severity {
     Suggestion,
     Warning,
     Error,
+}
+
+impl std::fmt::Display for Severity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Severity::Info => write!(f, "info"),
+            Severity::Suggestion => write!(f, "suggestion"),
+            Severity::Warning => write!(f, "warning"),
+            Severity::Error => write!(f, "error"),
+        }
+    }
+}
+
+impl std::str::FromStr for Severity {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "info" => Ok(Severity::Info),
+            "suggestion" => Ok(Severity::Suggestion),
+            "warning" => Ok(Severity::Warning),
+            "error" => Ok(Severity::Error),
+            _ => Err(format!(
+                "invalid severity '{}': expected info, suggestion, warning, or error",
+                s
+            )),
+        }
+    }
 }
 
 /// Promote a severity by `levels` steps (capped at Error).

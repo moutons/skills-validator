@@ -9,10 +9,14 @@
 use rayon::prelude::*;
 use std::path::PathBuf;
 
+use crate::config::ValidatorConfig;
 use crate::discovery::{discover_skills, DiscoveredSkill};
 use crate::git::find_repo_root;
+use crate::models::Severity;
 use crate::paths::{expand_path, PathsConfig};
-use crate::validator::{validate, ValidationResult};
+use crate::pipeline::{run_pipeline, PipelineResult};
+#[allow(deprecated)]
+use crate::validator::ValidationResult;
 
 /// Result of a full scan operation.
 #[derive(Debug, Clone, Default)]
@@ -38,8 +42,11 @@ pub struct ScanResult {
 pub struct SkillValidation {
     /// The discovered skill
     pub skill: DiscoveredSkill,
-    /// Validation result
+    /// Legacy validation result (for backward compat)
+    #[allow(deprecated)]
     pub validation: ValidationResult,
+    /// Pipeline result from the new validation pipeline
+    pub pipeline_result: Option<PipelineResult>,
     /// Is the skill valid?
     pub is_valid: bool,
 }
@@ -156,16 +163,40 @@ pub fn scan(options: &ScanOptions) -> ScanResult {
         return result;
     }
 
-    // Validate skills in parallel
+    // Validate skills in parallel using the new pipeline
+    let validator_config = ValidatorConfig::default();
     let skills: Vec<SkillValidation> = discovery
         .skills
         .into_par_iter()
         .map(|skill| {
-            let validation = validate(skill.directory.as_path());
+            let pipeline_result = run_pipeline(skill.directory.as_path(), &validator_config);
+            let has_errors = pipeline_result
+                .diagnostics
+                .iter()
+                .any(|d| d.severity == Severity::Error);
+
+            // Build a legacy ValidationResult for backward compat
+            #[allow(deprecated)]
+            let validation = ValidationResult {
+                errors: pipeline_result
+                    .diagnostics
+                    .iter()
+                    .filter(|d| d.severity == Severity::Error)
+                    .map(|d| d.human_message.clone())
+                    .collect(),
+                warnings: pipeline_result
+                    .diagnostics
+                    .iter()
+                    .filter(|d| d.severity == Severity::Warning)
+                    .map(|d| d.human_message.clone())
+                    .collect(),
+            };
+
             SkillValidation {
-                is_valid: validation.errors.is_empty(),
+                is_valid: !has_errors,
                 skill,
                 validation,
+                pipeline_result: Some(pipeline_result),
             }
         })
         .collect();

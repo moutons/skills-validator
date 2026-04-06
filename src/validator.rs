@@ -354,6 +354,10 @@ fn validate_no_scripts_in_base(skill_dir: &Path) -> ValidationResult {
     result
 }
 
+#[deprecated(
+    since = "0.2.0",
+    note = "Use `pipeline::run_pipeline()` with `formatter::format_human()` or `formatter::format_json()` instead."
+)]
 pub fn validate(skill_dir: &Path) -> ValidationResult {
     let skill_dir = skill_dir.to_path_buf();
     let mut result = ValidationResult::new();

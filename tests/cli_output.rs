@@ -23,7 +23,34 @@ mod validate_json_output {
     use super::*;
 
     #[test]
-    fn test_validate_json_outputs_valid_json() {
+    fn test_output_format_json_outputs_valid_json_to_stdout() {
+        let dir = TempDir::new().unwrap();
+        let path = make_skill(
+            &dir,
+            "test-skill",
+            "---\nname: test-skill\ndescription: Test skill\n---\nsome content",
+        );
+        let output = run_skill_validator(&[
+            "--output-format",
+            "json",
+            "validate",
+            path.to_str().unwrap(),
+        ]);
+
+        let stdout = String::from_utf8_lossy(&output.stdout);
+
+        // New pipeline JSON goes to stdout
+        let parsed: Result<serde_json::Value, _> = serde_json::from_str(&stdout);
+        assert!(parsed.is_ok(), "stdout should be valid JSON: {}", stdout);
+
+        let v = parsed.unwrap();
+        assert_eq!(v["schema_version"], 2, "Should have schema_version 2");
+        assert!(v.get("diagnostics").is_some(), "Should have diagnostics");
+        assert!(v.get("summary").is_some(), "Should have summary");
+    }
+
+    #[test]
+    fn test_deprecated_json_flag_emits_warning() {
         let dir = TempDir::new().unwrap();
         let path = make_skill(
             &dir,
@@ -34,29 +61,16 @@ mod validate_json_output {
 
         let stderr = String::from_utf8_lossy(&output.stderr);
 
-        // Should have at least one valid JSON line (the result)
-        let json_lines: Vec<&str> = stderr
-            .lines()
-            .filter(|line| line.starts_with('{') && line.ends_with('}'))
-            .collect();
-
+        // Should have deprecation warning
         assert!(
-            !json_lines.is_empty(),
-            "No JSON output found in stderr: {}",
+            stderr.contains("--json is deprecated"),
+            "Should contain deprecation warning in stderr: {}",
             stderr
-        );
-
-        // Try to parse the last JSON line as an object
-        let last_json = json_lines.last().unwrap();
-        assert!(
-            serde_json::from_str::<serde_json::Value>(last_json).is_ok(),
-            "Invalid JSON: {}",
-            last_json
         );
     }
 
     #[test]
-    fn test_validate_json_includes_valid_field() {
+    fn test_deprecated_json_flag_outputs_json_to_stdout() {
         let dir = TempDir::new().unwrap();
         let path = make_skill(
             &dir,
@@ -65,111 +79,62 @@ mod validate_json_output {
         );
         let output = run_skill_validator(&["--json", "validate", path.to_str().unwrap()]);
 
-        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
 
-        // Find the result JSON line
-        let json_lines: Vec<&str> = stderr
-            .lines()
-            .filter(|line| line.contains("\"valid\""))
-            .collect();
-
+        // --json now outputs new pipeline JSON to stdout
+        let parsed: Result<serde_json::Value, _> = serde_json::from_str(&stdout);
         assert!(
-            !json_lines.is_empty(),
-            "No result JSON found in stderr: {}",
-            stderr
-        );
-
-        let json_str = json_lines.last().unwrap();
-        let value: serde_json::Value = serde_json::from_str(json_str).unwrap();
-
-        assert!(value.get("valid").is_some(), "Missing 'valid' field");
-        assert!(
-            value.get("valid").unwrap().as_bool().is_some(),
-            "'valid' should be a boolean"
+            parsed.is_ok(),
+            "stdout should be valid JSON when --json is used: {}",
+            stdout
         );
     }
 
     #[test]
-    fn test_validate_json_includes_errors() {
+    fn test_validate_json_exit_code_on_errors() {
         let dir = TempDir::new().unwrap();
         let path = make_skill(&dir, "test", "---\ndescription: Missing name\n---\ncontent");
-        let output = run_skill_validator(&["--json", "validate", path.to_str().unwrap()]);
-
-        let stderr = String::from_utf8_lossy(&output.stderr);
+        let output = run_skill_validator(&[
+            "--output-format",
+            "json",
+            "validate",
+            path.to_str().unwrap(),
+        ]);
 
         // Should have non-zero exit code
         assert_ne!(output.status.code(), Some(0), "Should exit with error");
 
-        // Find the result JSON line with errors
-        let json_lines: Vec<&str> = stderr
-            .lines()
-            .filter(|line| line.contains("\"errors\""))
-            .collect();
-
-        assert!(!json_lines.is_empty(), "No result JSON with errors found");
-
-        let json_str = json_lines.last().unwrap();
-        let value: serde_json::Value = serde_json::from_str(json_str).unwrap();
-
-        assert!(value.get("errors").is_some(), "Missing 'errors' field");
-        let errors = value.get("errors").unwrap().as_array().unwrap();
-        assert!(!errors.is_empty(), "Errors should not be empty");
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let v: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+        assert_eq!(v["exit_code"], 1, "JSON exit_code should be 1");
+        assert!(
+            v["summary"]["errors"].as_u64().unwrap() > 0,
+            "Should have errors in summary"
+        );
     }
 
     #[test]
-    fn test_validate_json_includes_warnings() {
+    fn test_validate_json_includes_diagnostics() {
         let dir = TempDir::new().unwrap();
         let path = make_skill(
             &dir,
             "test-skill",
             "---\nname: test-skill\ndescription: Test skill\n---\nsome content without keywords",
         );
-        let output = run_skill_validator(&["--json", "validate", path.to_str().unwrap()]);
+        let output = run_skill_validator(&[
+            "--output-format",
+            "json",
+            "validate",
+            path.to_str().unwrap(),
+        ]);
 
-        let stderr = String::from_utf8_lossy(&output.stderr);
-
-        // Should exit successfully but have warnings
         assert_eq!(output.status.code(), Some(0), "Should exit successfully");
 
-        // Find the result JSON line with warnings
-        let json_lines: Vec<&str> = stderr
-            .lines()
-            .filter(|line| line.contains("\"warnings\""))
-            .collect();
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let v: serde_json::Value = serde_json::from_str(&stdout).unwrap();
 
-        assert!(!json_lines.is_empty(), "No result JSON with warnings found");
-
-        let json_str = json_lines.last().unwrap();
-        let value: serde_json::Value = serde_json::from_str(json_str).unwrap();
-
-        assert!(value.get("warnings").is_some(), "Missing 'warnings' field");
-        let warnings = value.get("warnings").unwrap().as_array().unwrap();
-        assert!(!warnings.is_empty(), "Warnings should not be empty");
-    }
-
-    #[test]
-    fn test_validate_json_stderr_only() {
-        let dir = TempDir::new().unwrap();
-        let path = make_skill(
-            &dir,
-            "test-skill",
-            "---\nname: test-skill\ndescription: Test skill\n---\ncontent",
-        );
-        let output = run_skill_validator(&["--json", "validate", path.to_str().unwrap()]);
-
-        let _stdout = String::from_utf8_lossy(&output.stdout);
-        let stderr = String::from_utf8_lossy(&output.stderr);
-
-        // stdout should be empty (result goes to stderr when --json)
-        // The result should contain JSON in stderr
-        let has_json_stderr = stderr
-            .lines()
-            .any(|line| line.starts_with('{') && line.ends_with('}'));
-
-        assert!(
-            has_json_stderr,
-            "JSON should be in stderr when --json is used"
-        );
+        let diags = v["diagnostics"].as_array().unwrap();
+        assert!(!diags.is_empty(), "Should have diagnostics");
     }
 }
 
@@ -177,7 +142,7 @@ mod validate_text_output {
     use super::*;
 
     #[test]
-    fn test_validate_text_outputs_plain_text() {
+    fn test_validate_text_outputs_to_stdout() {
         let dir = TempDir::new().unwrap();
         let path = make_skill(
             &dir,
@@ -188,44 +153,95 @@ mod validate_text_output {
 
         let stdout = String::from_utf8_lossy(&output.stdout);
 
-        // Should have the success message
+        // New pipeline outputs human format to stdout with the skill name header
         assert!(
-            stdout.contains("✓ Skill is valid"),
-            "Should contain '✓ Skill is valid' in stdout: {}",
+            stdout.contains("test-skill"),
+            "Should contain skill name in stdout: {}",
             stdout
         );
     }
 
     #[test]
-    fn test_validate_text_with_warnings() {
-        let dir = TempDir::new().unwrap();
-        let path = make_skill(
-            &dir,
-            "test-skill",
-            "---\nname: test-skill\ndescription: Test skill\n---\nsome content",
-        );
-        let output = run_skill_validator(&["validate", path.to_str().unwrap()]);
-
-        let stdout = String::from_utf8_lossy(&output.stdout);
-
-        // Should have the success message with warnings
-        assert!(
-            stdout.contains("✓ Skill is valid (with warnings)"),
-            "Should contain '✓ Skill is valid (with warnings)' in stdout: {}",
-            stdout
-        );
-    }
-
-    #[test]
-    fn test_validate_text_error_to_stderr() {
+    fn test_validate_text_error_exit_code() {
         let dir = TempDir::new().unwrap();
         let path = make_skill(&dir, "test", "---\ndescription: Missing name\n---\ncontent");
         let output = run_skill_validator(&["validate", path.to_str().unwrap()]);
 
-        let stderr = String::from_utf8_lossy(&output.stderr);
-
-        // Error messages should go to stderr
-        assert!(stderr.contains("name"), "Error should mention 'name' field");
         assert_ne!(output.status.code(), Some(0), "Should exit with error");
+    }
+}
+
+mod strict_mode {
+    use super::*;
+
+    #[test]
+    fn test_strict_exits_nonzero_on_warnings() {
+        let dir = TempDir::new().unwrap();
+        // A skill that is valid but has suggestions/warnings
+        let path = make_skill(
+            &dir,
+            "test-skill",
+            "---\nname: test-skill\ndescription: Test skill\n---\nsome content",
+        );
+        let output = run_skill_validator(&["--strict", "validate", path.to_str().unwrap()]);
+
+        // Without strict this would be exit 0, with strict it should be 1
+        // because there will be suggestions/warnings
+        assert_ne!(
+            output.status.code(),
+            Some(0),
+            "Strict mode should fail on warnings/suggestions"
+        );
+    }
+
+    #[test]
+    fn test_non_strict_exits_zero_on_warnings() {
+        let dir = TempDir::new().unwrap();
+        let path = make_skill(
+            &dir,
+            "test-skill",
+            "---\nname: test-skill\ndescription: Test skill\n---\nsome content",
+        );
+        let output = run_skill_validator(&["validate", path.to_str().unwrap()]);
+
+        assert_eq!(
+            output.status.code(),
+            Some(0),
+            "Non-strict should exit 0 when only warnings/suggestions"
+        );
+    }
+}
+
+mod severity_filter {
+    use super::*;
+
+    #[test]
+    fn test_severity_filter_in_json() {
+        let dir = TempDir::new().unwrap();
+        let path = make_skill(
+            &dir,
+            "test-skill",
+            "---\nname: test-skill\ndescription: Test skill\n---\nsome content",
+        );
+        let output = run_skill_validator(&[
+            "--output-format",
+            "json",
+            "--severity",
+            "error",
+            "validate",
+            path.to_str().unwrap(),
+        ]);
+
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let v: serde_json::Value = serde_json::from_str(&stdout).unwrap();
+
+        let diags = v["diagnostics"].as_array().unwrap();
+        for d in diags {
+            assert_eq!(
+                d["severity"].as_str().unwrap(),
+                "error",
+                "All diagnostics should be error severity when --severity error"
+            );
+        }
     }
 }

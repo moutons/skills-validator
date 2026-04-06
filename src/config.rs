@@ -1,7 +1,3 @@
-// Types and functions are consumed via the library crate (tests, future pipeline tasks).
-// Remove this allow as consuming code is added to the binary.
-#![allow(dead_code)]
-
 use crate::models::{CheckName, Diagnostic, Severity};
 use std::path::PathBuf;
 

@@ -58,17 +58,28 @@ cargo clippy -- -D warnings
 
 ```text
 src/
-├── cli.rs      # CLI argument parsing
-├── lib.rs      # Public API exports
-├── scan.rs     # Scan orchestration
-├── discovery.rs # Skill discovery
-├── git.rs      # Git repository detection
-├── paths.rs    # Path configuration
-├── parser.rs   # YAML parsing
-├── validator.rs # Validation logic
-├── prompt.rs   # XML generation
-├── models.rs   # Data structures
-└── error.rs    # Error types
+├── cli.rs        # CLI argument parsing
+├── config.rs     # Config loading (TOML + env overrides)
+├── discovery.rs  # Skill discovery
+├── error.rs      # Error types
+├── formatter.rs  # Human and JSON output formatting
+├── git.rs        # Git repository detection
+├── lib.rs        # Public API exports
+├── main.rs       # Binary entry point
+├── models.rs     # Data structures (Diagnostic, Severity, Sizeyness, PipelineResult)
+├── parser.rs     # YAML parsing
+├── passes/       # Five-pass validation pipeline
+│   ├── mod.rs        # Pass trait and module exports
+│   ├── parse.rs      # Pass 1: Parse (pulldown-cmark AST)
+│   ├── structure.rs  # Pass 2: Structure (file inventory, sizeyness, binary detection)
+│   ├── content.rs    # Pass 3: Content (frontmatter, quality, reinforcement)
+│   ├── references.rs # Pass 4: References (chain walking, orphan detection)
+│   └── security.rs   # Pass 5: Security (semgrep, remote execution detection)
+├── paths.rs      # Path configuration
+├── pipeline.rs   # Pipeline orchestration
+├── prompt.rs     # XML generation
+├── scan.rs       # Scan orchestration
+└── validator.rs  # Legacy validation logic (deprecated, wraps pipeline)
 ```
 
 ## Key Files

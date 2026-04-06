@@ -1,0 +1,25 @@
+rules:
+  - id: env-to-curl
+    patterns:
+      - pattern-regex: "curl\\s+.*\\$\\{?\\w+\\}?"
+    message: >
+      Environment variable passed to curl may exfiltrate sensitive data.
+    languages: [bash]
+    severity: WARNING
+
+  - id: env-to-wget
+    patterns:
+      - pattern-regex: "wget\\s+.*\\$\\{?\\w+\\}?"
+    message: >
+      Environment variable passed to wget may exfiltrate sensitive data.
+    languages: [bash]
+    severity: WARNING
+
+  - id: python-env-to-requests
+    patterns:
+      - pattern: requests.get(os.environ[$KEY])
+      - pattern: requests.post(os.environ[$KEY], ...)
+    message: >
+      Environment variable used as URL in requests may exfiltrate data.
+    languages: [python]
+    severity: WARNING

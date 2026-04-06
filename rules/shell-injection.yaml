@@ -1,0 +1,41 @@
+rules:
+  - id: shell-eval
+    patterns:
+      - pattern: eval $...ARGS
+    message: >
+      Use of eval can execute arbitrary code. Avoid eval with untrusted input.
+    languages: [bash]
+    severity: WARNING
+
+  - id: curl-pipe-bash
+    patterns:
+      - pattern-regex: "curl\\s+.*\\|\\s*(bash|sh)"
+    message: >
+      Piping curl output to a shell executes remote code without inspection.
+    languages: [bash]
+    severity: ERROR
+
+  - id: wget-pipe-bash
+    patterns:
+      - pattern-regex: "wget\\s+.*\\|\\s*(bash|sh)"
+    message: >
+      Piping wget output to a shell executes remote code without inspection.
+    languages: [bash]
+    severity: ERROR
+
+  - id: bash-process-substitution
+    patterns:
+      - pattern-regex: "(bash|sh)\\s+<\\(curl"
+    message: >
+      Process substitution with curl executes remote code without inspection.
+    languages: [bash]
+    severity: ERROR
+
+  - id: backtick-execution
+    patterns:
+      - pattern-regex: "`[^`]+`"
+    message: >
+      Backtick command substitution can obscure what is executed.
+      Prefer $() for clarity.
+    languages: [bash]
+    severity: INFO

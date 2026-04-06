@@ -683,4 +683,58 @@ hefty_subdir_threshold = 0
         assert!(diags.is_empty());
         assert_eq!(config.sizeyness.moderate_file_threshold, 3);
     }
+
+    // Env var tests exercise the try_env_* helpers directly to avoid
+    // parallel-test interference (env vars are process-global).
+
+    #[test]
+    fn test_try_env_usize_valid() {
+        let key = "SKILLS_VALIDATOR_TEST_USIZE_VALID";
+        std::env::set_var(key, "10");
+        let mut val: usize = 3;
+        let mut diags = Vec::new();
+        try_env_usize(key, &mut val, &mut diags);
+        std::env::remove_var(key);
+
+        assert_eq!(val, 10);
+        assert!(diags.is_empty());
+    }
+
+    #[test]
+    fn test_try_env_usize_invalid() {
+        let key = "SKILLS_VALIDATOR_TEST_USIZE_INVALID";
+        std::env::set_var(key, "not_a_number");
+        let mut val: usize = 300;
+        let mut diags = Vec::new();
+        try_env_usize(key, &mut val, &mut diags);
+        std::env::remove_var(key);
+
+        assert_eq!(val, 300); // unchanged
+        assert_eq!(diags.len(), 1);
+        assert_eq!(diags[0].severity, Severity::Warning);
+    }
+
+    #[test]
+    fn test_try_env_bool_valid() {
+        let key = "SKILLS_VALIDATOR_TEST_BOOL_VALID";
+        std::env::set_var(key, "false");
+        let mut val = true;
+        let mut diags = Vec::new();
+        try_env_bool(key, &mut val, &mut diags);
+        std::env::remove_var(key);
+
+        assert!(!val);
+        assert!(diags.is_empty());
+    }
+
+    #[test]
+    fn test_try_env_string_valid() {
+        let key = "SKILLS_VALIDATOR_TEST_STRING_VALID";
+        std::env::set_var(key, "/usr/local/bin/semgrep");
+        let mut val = "semgrep".to_string();
+        try_env_string(key, &mut val);
+        std::env::remove_var(key);
+
+        assert_eq!(val, "/usr/local/bin/semgrep");
+    }
 }

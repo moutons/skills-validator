@@ -31,7 +31,7 @@ test:
 
 # Run security audit
 security:
-  cargo audit
+  cargo deny check
   gitleaks git --platform gitea --platform github .
 
 # Lint markdown files

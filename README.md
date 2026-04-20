@@ -2,46 +2,59 @@
 
 [![CI](https://github.com/moutons/skills-validator/actions/workflows/ci.yml/badge.svg)](https://github.com/moutons/skills-validator/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/moutons/skills-validator/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/moutons/skills-validator/actions/workflows/github-code-scanning/codeql)
+[![Crates.io](https://img.shields.io/crates/v/skills-validator)](https://crates.io/crates/skills-validator) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/12600/badge)](https://www.bestpractices.dev/projects/12600)
 
-A Rust reimplementation of the [agentskills/skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref) Python library with a layered validation pipeline, configurable severity tiers, and sizeyness-aware escalation.
+A validation tool for [Agent Skills](https://agentskills.io/specification) — the emerging standard for packaging reusable instructions that AI coding agents can discover and follow. skills-validator checks skill directories for spec compliance,
+content quality, reference integrity, and security concerns using a five-pass analysis pipeline.
 
-> **Note:** This library validates skills according to the Agent Skills specification, informed by the OpenCode and Claude Code implementations.
-
-## Specification
-
-This implementation follows the Agent Skills specification and key implementations:
-
-- **Official Spec**: <https://agentskills.io/specification>
-- **OpenCode Implementation**: <https://opencode.ai/docs/skills/>
-- **Claude Code Implementation**: <https://code.claude.com/docs/en/skills>
+> Validates skills according to the Agent Skills specification, informed by the [OpenCode](https://opencode.ai/docs/skills/) and [Claude Code](https://code.claude.com/docs/en/skills) implementations.
 
 ## Installation
 
-```bash
-cargo install --locked
-```
-
-Or from a specific version:
+From [crates.io](https://crates.io/crates/skills-validator):
 
 ```bash
-cargo install --locked --git https://github.com/moutons/skills-validator.git --tag v0.2.0
+cargo binstall skills-validator --locked
+# or
+cargo install skills-validator --locked
 ```
 
-## Usage
+From source:
 
-### CLI
+```bash
+git clone https://github.com/moutons/skills-validator.git
+cd skills-validator
+cargo install --path . --locked
+```
+
+## Quick Start
 
 ```bash
 # Validate a skill directory
 skills-validator validate path/to/skill
 
-# Validate with strict mode (exit 1 on warnings/suggestions)
-skills-validator validate path/to/skill --strict
-
-# Filter output by severity
-skills-validator validate path/to/skill --severity warning
+# Scan all known agent tool directories for skills
+skills-validator scan --all
 
 # JSON output for CI pipelines
+skills-validator validate path/to/skill --output-format json
+```
+
+## Usage
+
+### Validating Skills
+
+```bash
+# Basic validation
+skills-validator validate path/to/skill
+
+# Strict mode — exit 1 on warnings and suggestions, not just errors
+skills-validator validate path/to/skill --strict
+
+# Filter output by minimum severity
+skills-validator validate path/to/skill --severity warning
+
+# JSON output
 skills-validator validate path/to/skill --output-format json
 
 # Read skill properties (outputs YAML)
@@ -49,17 +62,23 @@ skills-validator read-properties path/to/skill
 
 # Generate <available_skills> XML for agent prompts
 skills-validator to-prompt path/to/skill-a path/to/skill-b
+```
 
-# Scan for skills across multiple tool directories
+### Scanning for Skills
+
+The `scan` command discovers and validates skills across agent tool directories (Claude Code, OpenCode, Cursor, Windsurf, and 20+ others).
+
+```bash
 skills-validator scan --all                    # Scan repo + user home
 skills-validator scan --user                   # Scan user home only
 skills-validator scan --repo                   # Scan repo root only
 skills-validator scan --tool claude-code       # Scan specific tool(s)
+skills-validator scan --all --dry-run          # Discover without validating
+```
 
-# Generate a default config file
-skills-validator setup
+### Shell Completions
 
-# Generate shell completions
+```bash
 skills-validator completions bash
 skills-validator completions zsh
 skills-validator completions fish
@@ -67,38 +86,119 @@ skills-validator completions fish
 
 ### CLI Flags
 
-| Flag                                          | Description                                                                   |
-| --------------------------------------------- | ----------------------------------------------------------------------------- |
-| `--strict`                                    | Exit 1 on warnings or suggestions (not just errors)                           |
-| `--output-format human\|json`                 | Output format (default: `human`)                                              |
-| `--severity info\|suggestion\|warning\|error` | Only show diagnostics at or above this severity                               |
-| `--json`                                      | **Deprecated.** Alias for `--output-format json`; emits a deprecation warning |
-| `--verbose`                                   | Show detailed output                                                          |
-| `--dry-run`                                   | Discover skills without validating (scan subcommand)                          |
+| Flag                                          | Description                                          |
+| --------------------------------------------- | ---------------------------------------------------- |
+| `--strict`                                    | Exit 1 on warnings or suggestions (not just errors)  |
+| `--output-format human\|json`                 | Output format (default: `human`)                     |
+| `--severity info\|suggestion\|warning\|error` | Only show diagnostics at or above this severity      |
+| `--json`                                      | **Deprecated.** Alias for `--output-format json`     |
+| `--verbose`                                   | Show detailed output                                 |
+| `--dry-run`                                   | Discover skills without validating (scan subcommand) |
 
-### Rust API
+### Exit Codes
 
-```rust
-use skills_validator::{run_pipeline, read_properties, to_prompt};
+| Code | Meaning                                    |
+| ---- | ------------------------------------------ |
+| `0`  | All skills valid (warnings may be present) |
+| `1`  | One or more skills invalid                 |
+| `2`  | Scan or configuration error                |
 
-fn main() {
-    // Validate a skill directory using the five-pass pipeline
-    let result = run_pipeline("my-skill");
-    for diagnostic in &result.diagnostics {
-        println!("[{}] {}", diagnostic.severity, diagnostic.message);
-    }
+## Configuration
 
-    // Read skill properties
-    let props = read_properties("my-skill").unwrap();
-    println!("Skill: {} - {}", props.name, props.description);
+### Config File
 
-    // Generate prompt for available skills
-    let prompt = to_prompt(&["skill-a", "skill-b"]);
-    println!("{}", prompt);
-}
+Generate a default config file:
+
+```bash
+skills-validator setup
 ```
 
-> **Migration note:** `validate()` and `ValidationResult` are deprecated. Use `run_pipeline()` and `PipelineResult`/`Vec<Diagnostic>` instead. See CHANGELOG.md for the full migration guide.
+This creates `$XDG_CONFIG_HOME/skills-validator/config.toml` (typically `~/.config/skills-validator/config.toml`) with all options commented out showing their defaults:
+
+```toml
+# skills-validator configuration
+# Override order: compiled defaults -> this file -> env vars -> CLI flags
+# Env var naming: SKILLS_VALIDATOR_<SECTION>_<KEY> (uppercase)
+
+# [sizeyness]
+# moderate_file_threshold = 3
+# hefty_file_threshold = 6
+# moderate_subdir_threshold = 1
+# hefty_subdir_threshold = 3
+
+# [content]
+# body_line_limit = 300
+# known_models = ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"]
+
+# [references]
+# markdown_hop_limit = 5
+# orphan_exclusions = ["LICENSE*", "CHANGELOG*", "README*", ".gitignore", ".*"]
+
+# [security]
+# semgrep_enabled = true
+# semgrep_path = "semgrep"
+# custom_rules_dir = ""
+```
+
+### Configuration Sections
+
+**`[sizeyness]`** — Thresholds for classifying skills as Simple, Moderate, or Hefty. Larger skills are held to higher standards (suggestions escalate to warnings or errors).
+
+| Field                       | Default | Description                        |
+| --------------------------- | ------- | ---------------------------------- |
+| `moderate_file_threshold`   | `3`     | File count to classify as Moderate |
+| `hefty_file_threshold`      | `6`     | File count to classify as Hefty    |
+| `moderate_subdir_threshold` | `1`     | Subdirectory count for Moderate    |
+| `hefty_subdir_threshold`    | `3`     | Subdirectory count for Hefty       |
+
+**`[content]`** — Body length limits and model validation.
+
+| Field             | Default                    | Description                                   |
+| ----------------- | -------------------------- | --------------------------------------------- |
+| `body_line_limit` | `300`                      | Maximum body lines before warning             |
+| `known_models`    | `["claude-opus-4-6", ...]` | Valid model identifiers for the `model` field |
+
+**`[references]`** — Link validation and orphan detection.
+
+| Field                | Default                           | Description                                 |
+| -------------------- | --------------------------------- | ------------------------------------------- |
+| `markdown_hop_limit` | `5`                               | Maximum link chain depth before stopping    |
+| `orphan_exclusions`  | `["LICENSE*", "CHANGELOG*", ...]` | Glob patterns for files that aren't orphans |
+
+**`[security]`** — Semgrep integration and security scanning.
+
+| Field              | Default     | Description                                 |
+| ------------------ | ----------- | ------------------------------------------- |
+| `semgrep_enabled`  | `true`      | Enable semgrep analysis of embedded scripts |
+| `semgrep_path`     | `"semgrep"` | Path to semgrep binary                      |
+| `custom_rules_dir` | `""`        | Additional semgrep rules directory          |
+
+### Environment Variables
+
+Every config field can be overridden with an environment variable using the pattern `SKILLS_VALIDATOR_<SECTION>_<KEY>`:
+
+| Environment Variable                                   | Config Field                          |
+| ------------------------------------------------------ | ------------------------------------- |
+| `SKILLS_VALIDATOR_SIZEYNESS_MODERATE_FILE_THRESHOLD`   | `sizeyness.moderate_file_threshold`   |
+| `SKILLS_VALIDATOR_SIZEYNESS_HEFTY_FILE_THRESHOLD`      | `sizeyness.hefty_file_threshold`      |
+| `SKILLS_VALIDATOR_SIZEYNESS_MODERATE_SUBDIR_THRESHOLD` | `sizeyness.moderate_subdir_threshold` |
+| `SKILLS_VALIDATOR_SIZEYNESS_HEFTY_SUBDIR_THRESHOLD`    | `sizeyness.hefty_subdir_threshold`    |
+| `SKILLS_VALIDATOR_CONTENT_BODY_LINE_LIMIT`             | `content.body_line_limit`             |
+| `SKILLS_VALIDATOR_REFERENCES_MARKDOWN_HOP_LIMIT`       | `references.markdown_hop_limit`       |
+| `SKILLS_VALIDATOR_SECURITY_SEMGREP_ENABLED`            | `security.semgrep_enabled`            |
+| `SKILLS_VALIDATOR_SECURITY_SEMGREP_PATH`               | `security.semgrep_path`               |
+| `SKILLS_VALIDATOR_SECURITY_CUSTOM_RULES_DIR`           | `security.custom_rules_dir`           |
+
+Boolean values accept `true`/`false`, `1`/`0`, or `yes`/`no` (case-insensitive). Invalid values emit a warning and fall back to the previous value.
+
+### Override Order
+
+Configuration is resolved in this order (later wins):
+
+1. Compiled defaults
+2. Config file (`config.toml`)
+3. Environment variables
+4. CLI flags
 
 ## Validation Pipeline
 
@@ -114,8 +214,6 @@ Validation runs as a five-pass pipeline. Each pass can emit diagnostics at any s
 
 ### Diagnostic Severity Tiers
 
-Diagnostics use a four-tier severity model:
-
 | Tier           | Purpose                                       | Exit code             |
 | -------------- | --------------------------------------------- | --------------------- |
 | **Info**       | Positive reinforcement for good practices     | 0                     |
@@ -125,8 +223,8 @@ Diagnostics use a four-tier severity model:
 
 ### Sizeyness Escalation
 
-Skills are classified by sizeyness (Simple, Moderate, Hefty) based on file count, total size, and body length. A check that produces a **suggestion** for a simple skill may escalate to a **warning** or **error** for a moderate or hefty one. This
-means larger, more complex skills are held to a higher standard.
+Skills are classified by sizeyness (Simple, Moderate, Hefty) based on file count, total size, and body length. A check that produces a **suggestion** for a simple skill may escalate to a **warning** or **error** for a moderate or hefty one. Larger,
+more complex skills are held to a higher standard.
 
 ### Frontmatter Validation
 
@@ -143,7 +241,7 @@ Validates against the [Agent Skills specification](https://agentskills.io/specif
 
 **Unknown fields** produce warnings (demoted from errors in 0.2.0).
 
-### Content Validation
+### Content Quality
 
 Warns when skill content is missing key directive words:
 
@@ -168,35 +266,29 @@ Claude Code supports additional fields beyond the official spec. These generate 
 
 See <https://code.claude.com/docs/en/skills> for details.
 
-## Configuration
+## Rust API
 
-The validator supports configurable thresholds via a TOML config file.
+```rust
+use skills_validator::{run_pipeline, read_properties, to_prompt};
 
-### Config File Location
+fn main() {
+    // Validate a skill directory using the five-pass pipeline
+    let result = run_pipeline("my-skill");
+    for diagnostic in &result.diagnostics {
+        println!("[{}] {}", diagnostic.severity, diagnostic.message);
+    }
 
-`$XDG_CONFIG_HOME/skills-validator/config.toml` (typically `~/.config/skills-validator/config.toml`)
+    // Read skill properties
+    let props = read_properties("my-skill").unwrap();
+    println!("Skill: {} - {}", props.name, props.description);
 
-Generate a default config with:
-
-```bash
-skills-validator setup
+    // Generate prompt for available skills
+    let prompt = to_prompt(&["skill-a", "skill-b"]);
+    println!("{}", prompt);
+}
 ```
 
-### Config Sections
-
-- `[sizeyness]` - Thresholds for Simple/Moderate/Hefty classification
-- `[content]` - Body length limits, directive keyword requirements
-- `[references]` - Chain walk depth, orphan detection settings
-- `[security]` - Semgrep integration, remote execution pattern detection
-
-### Override Order
-
-Configuration is resolved in this order (later wins):
-
-1. Compiled defaults
-2. Config file (`config.toml`)
-3. Environment variables (`SKILLS_VALIDATOR_<SECTION>_<KEY>`)
-4. CLI flags
+> **Migration note:** `validate()` and `ValidationResult` are deprecated. Use `run_pipeline()` and `PipelineResult`/`Vec<Diagnostic>` instead. See CHANGELOG.md for the full migration guide.
 
 ## Agent Prompt Integration
 
@@ -218,63 +310,6 @@ What this skill does and when to use it
 </available_skills>
 ```
 
-## Skill Scanning
-
-The `scan` command discovers and validates skills across multiple agent tool directories.
-
-### Scan Modes
-
-- `--all`: Scan both the current git repository and user home directory
-- `--user`: Scan only the user home directory for all tool directories
-- `--repo`: Scan only the current git repository
-- `--tool <tools>`: Scan specific tool(s) (comma-separated list)
-
-### Options
-
-- `--dry-run`: Discover skills without validating
-- `--verbose`: Show detailed output for each skill
-- `--output-format json`: Output results as JSON
-
-### Scan Path Configuration
-
-Tool paths are configured in `paths.jsonc` which is embedded at compile time. The tool directory templates support:
-
-- `$HOME` or `~`: User home directory
-- `$REPO_ROOT`: Git repository root (detected via git2)
-
-### Exit Codes
-
-- `0`: All skills valid (warnings may be present)
-- `1`: Some skills invalid
-- `2`: Scan or configuration error
-
-### Examples
-
-```bash
-# Scan all known locations
-skills-validator scan --all
-
-# Scan only your home directory
-skills-validator scan --user
-
-# Scan the current repository
-skills-validator scan --repo
-
-# Scan for specific tools
-skills-validator scan --tool claude-code,opencode
-
-# Dry run to see what would be scanned
-skills-validator scan --all --dry-run
-```
-
-## Development
-
-```bash
-cargo build --release
-cargo test
-cargo clippy
-```
-
 ## Security Considerations When Building Skills
 
 Script execution introduces security risks. Consider:
@@ -284,9 +319,14 @@ Script execution introduces security risks. Consider:
 - **Confirmation**: Ask users before running potentially dangerous operations
 - **Logging**: Record all script executions for auditing
 
-The validator's security pass detects remote execution patterns (curl-pipe-bash, etc.) and can optionally run semgrep for deeper script analysis. Configure semgrep integration in the config file.
+The validator's security pass detects remote execution patterns (curl-pipe-bash, etc.) and can optionally run semgrep for deeper script analysis. Configure semgrep integration in the `[security]` section of the config file.
 
 See <https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#security-considerations> for more details.
+
+## Background
+
+This project draws inspiration from the [agentskills/skills-ref](https://github.com/agentskills/agentskills/tree/main/skills-ref) Python reference library, extending it with a layered validation pipeline, configurable severity tiers, and
+sizeyness-aware escalation.
 
 ## License
 

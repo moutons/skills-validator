@@ -171,11 +171,11 @@ All parse diagnostics are errors regardless of sizeyness — parse failures are 
 
 ### Pass 2 Diagnostics
 
-| Check             | Base severity | Escalates?                             | Details                                                                    |
-| ----------------- | ------------- | -------------------------------------- | -------------------------------------------------------------------------- |
-| `binary-detected` | Error         | All tiers: error                       | Binary file detected — security concern                                    |
-| `scripts-in-root` | Suggestion    | Simple: suggestion, Moderate+: warning | Scripts in root, consider organizing into `scripts/`                       |
-| `sizeyness-info`  | Info          | All tiers: info                        | Skill classified as {tier} ({reasons})                                     |
+| Check             | Base severity | Escalates?                             | Details                                              |
+| ----------------- | ------------- | -------------------------------------- | ---------------------------------------------------- |
+| `binary-detected` | Error         | All tiers: error                       | Binary file detected — security concern              |
+| `scripts-in-root` | Suggestion    | Simple: suggestion, Moderate+: warning | Scripts in root, consider organizing into `scripts/` |
+| `sizeyness-info`  | Info          | All tiers: info                        | Skill classified as {tier} ({reasons})               |
 
 ## Pass 3: Content
 
@@ -196,11 +196,11 @@ All parse diagnostics are errors regardless of sizeyness — parse failures are 
 
 ### Extension field validation
 
-| Check                 | Severity   | Details                                                                      |
-| --------------------- | ---------- | ---------------------------------------------------------------------------- |
-| `context-valid-value` | Error      | If set, `context` must be `fork` (only documented value)                     |
-| `agent-with-context`  | Warning    | `agent` without `context: fork` has no effect                                |
-| `model-recognized`    | Suggestion | Check against bundled list. Unknown models get suggestion. Configurable.     |
+| Check                 | Severity   | Details                                                                  |
+| --------------------- | ---------- | ------------------------------------------------------------------------ |
+| `context-valid-value` | Error      | If set, `context` must be `fork` (only documented value)                 |
+| `agent-with-context`  | Warning    | `agent` without `context: fork` has no effect                            |
+| `model-recognized`    | Suggestion | Check against bundled list. Unknown models get suggestion. Configurable. |
 
 ### Content quality checks (prose-only AST)
 
@@ -250,14 +250,14 @@ Symlinks in the skill directory are followed and treated as their targets. The r
 
 ### Pass 4 Diagnostics
 
-| Check                    | Base severity | Escalates?                                            | Details                                                                      |
-| ------------------------ | ------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `broken-reference`       | Warning       | Simple: warning, Moderate+: error                     | Referenced file missing. Warning for simple (WIP references ok)              |
-| `orphaned-files`         | Suggestion    | Simple: suggestion, Moderate: warning, Hefty: warning | Files unreachable from markdown chain, may be used by scripts              |
-| `hooks-script-missing`   | Error         | No, always error                                      | `hooks` frontmatter references missing script                                |
-| `circular-reference`     | Info          | No                                                    | Cycle detected (A→B→A). All reachable, may indicate confusing structure.    |
-| `hop-limit-reached`      | Info          | No                                                    | Chain exceeds hop limit. Consider simplifying documentation structure.       |
-| `path-traversal-blocked` | Warning       | No                                                    | Reference resolves outside skill directory, not followed.                    |
+| Check                    | Base severity | Escalates?                                            | Details                                                                  |
+| ------------------------ | ------------- | ----------------------------------------------------- | ------------------------------------------------------------------------ |
+| `broken-reference`       | Warning       | Simple: warning, Moderate+: error                     | Referenced file missing. Warning for simple (WIP references ok)          |
+| `orphaned-files`         | Suggestion    | Simple: suggestion, Moderate: warning, Hefty: warning | Files unreachable from markdown chain, may be used by scripts            |
+| `hooks-script-missing`   | Error         | No, always error                                      | `hooks` frontmatter references missing script                            |
+| `circular-reference`     | Info          | No                                                    | Cycle detected (A→B→A). All reachable, may indicate confusing structure. |
+| `hop-limit-reached`      | Info          | No                                                    | Chain exceeds hop limit. Consider simplifying documentation structure.   |
+| `path-traversal-blocked` | Warning       | No                                                    | Reference resolves outside skill directory, not followed.                |
 
 ### Exclusions from orphan detection
 

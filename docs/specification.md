@@ -38,14 +38,14 @@ the official spec and Claude Code extensions.
 
 ## Commands
 
-| Command            | Purpose                                            |
-| ------------------ | -------------------------------------------------- |
-| `validate`         | Validate a single skill directory                  |
-| `scan`             | Discover and validate skills across tool dirs      |
-| `read-properties`  | Extract and display skill metadata                 |
-| `to-prompt`        | Generate XML-formatted `<available_skills>` block  |
-| `setup`            | Initialize configuration and directories           |
-| `completions`      | Generate shell completions for bash/zsh/fish       |
+| Command           | Purpose                                           |
+| ----------------- | ------------------------------------------------- |
+| `validate`        | Validate a single skill directory                 |
+| `scan`            | Discover and validate skills across tool dirs     |
+| `read-properties` | Extract and display skill metadata                |
+| `to-prompt`       | Generate XML-formatted `<available_skills>` block |
+| `setup`           | Initialize configuration and directories          |
+| `completions`     | Generate shell completions for bash/zsh/fish      |
 
 ---
 
@@ -165,12 +165,12 @@ Each pass produces diagnostics at various severity levels, enabling gradual enfo
 
 Diagnostics are classified into four tiers:
 
-| Tier      | Meaning                                                                  |
-| --------- | ------------------------------------------------------------------------ |
-| Info      | Informational messages, no action required                               |
-| Suggestion| Best practice recommendations, skills pass validation                    |
-| Warning   | Violations of content guidelines, skills pass validation                 |
-| Error     | Specification violations, causes validation failure (exit code 1)        |
+| Tier       | Meaning                                                           |
+| ---------- | ----------------------------------------------------------------- |
+| Info       | Informational messages, no action required                        |
+| Suggestion | Best practice recommendations, skills pass validation             |
+| Warning    | Violations of content guidelines, skills pass validation          |
+| Error      | Specification violations, causes validation failure (exit code 1) |
 
 ---
 

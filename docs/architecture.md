@@ -60,42 +60,42 @@ The skills-validator follows a modular, pipeline-oriented architecture with clea
 
 ### Core Modules
 
-| Module   | File           | Responsibility                                            |
-| -------- | -------------- | --------------------------------------------------------- |
-| `cli`    | `src/cli.rs`   | CLI argument parsing, command dispatch, flag definitions  |
-| `error`  | `src/error.rs` | Error type definitions using `thiserror`                  |
-| `models` | `src/models.rs`| Data structures (`Diagnostic`, `Severity`, `Sizeyness`, `PipelineResult`) |
-| `parser` | `src/parser.rs`| YAML frontmatter parsing, file discovery                  |
-| `prompt` | `src/prompt.rs`| XML prompt generation                                     |
-| `main`   | `src/main.rs`  | Binary entry point                                        |
-| `lib`    | `src/lib.rs`   | Public API exports and re-exports                         |
+| Module   | File            | Responsibility                                                            |
+| -------- | --------------- | ------------------------------------------------------------------------- |
+| `cli`    | `src/cli.rs`    | CLI argument parsing, command dispatch, flag definitions                  |
+| `error`  | `src/error.rs`  | Error type definitions using `thiserror`                                  |
+| `models` | `src/models.rs` | Data structures (`Diagnostic`, `Severity`, `Sizeyness`, `PipelineResult`) |
+| `parser` | `src/parser.rs` | YAML frontmatter parsing, file discovery                                  |
+| `prompt` | `src/prompt.rs` | XML prompt generation                                                     |
+| `main`   | `src/main.rs`   | Binary entry point                                                        |
+| `lib`    | `src/lib.rs`    | Public API exports and re-exports                                         |
 
 ### Pipeline Modules
 
-| Module              | File                       | Responsibility                                                  |
-| ------------------- | -------------------------- | --------------------------------------------------------------- |
-| `pipeline`          | `src/pipeline.rs`          | Pipeline orchestration: runs all five passes, merges diagnostics, computes exit codes |
-| `config`            | `src/config.rs`            | Config loading from TOML with environment variable overrides    |
-| `formatter`         | `src/formatter.rs`         | Human-readable and JSON output formatting (`schema_version`)    |
-| `passes::parse`     | `src/passes/parse.rs`      | Pass 1: Parse skill markdown into a pulldown-cmark AST          |
-| `passes::structure` | `src/passes/structure.rs`  | Pass 2: File inventory, sizeyness classification, binary detection |
-| `passes::content`   | `src/passes/content.rs`    | Pass 3: Frontmatter validation, quality checks, reinforcement   |
-| `passes::references`| `src/passes/references.rs` | Pass 4: Reference chain walking, orphan detection               |
-| `passes::security`  | `src/passes/security.rs`   | Pass 5: Semgrep integration, remote execution detection         |
+| Module               | File                       | Responsibility                                                                        |
+| -------------------- | -------------------------- | ------------------------------------------------------------------------------------- |
+| `pipeline`           | `src/pipeline.rs`          | Pipeline orchestration: runs all five passes, merges diagnostics, computes exit codes |
+| `config`             | `src/config.rs`            | Config loading from TOML with environment variable overrides                          |
+| `formatter`          | `src/formatter.rs`         | Human-readable and JSON output formatting (`schema_version`)                          |
+| `passes::parse`      | `src/passes/parse.rs`      | Pass 1: Parse skill markdown into a pulldown-cmark AST                                |
+| `passes::structure`  | `src/passes/structure.rs`  | Pass 2: File inventory, sizeyness classification, binary detection                    |
+| `passes::content`    | `src/passes/content.rs`    | Pass 3: Frontmatter validation, quality checks, reinforcement                         |
+| `passes::references` | `src/passes/references.rs` | Pass 4: Reference chain walking, orphan detection                                     |
+| `passes::security`   | `src/passes/security.rs`   | Pass 5: Semgrep integration, remote execution detection                               |
 
 ### Scan Modules
 
-| Module      | File               | Responsibility                                                  |
-| ----------- | ------------------ | --------------------------------------------------------------- |
-| `scan`      | `src/scan.rs`      | Scan orchestration, parallel validation, duplicate detection    |
-| `discovery` | `src/discovery.rs` | Skill discovery via directory walking                           |
-| `git`       | `src/git.rs`       | Git repository detection using git2                             |
-| `paths`     | `src/paths.rs`     | Path configuration loading and expansion (`paths.jsonc`)        |
+| Module      | File               | Responsibility                                               |
+| ----------- | ------------------ | ------------------------------------------------------------ |
+| `scan`      | `src/scan.rs`      | Scan orchestration, parallel validation, duplicate detection |
+| `discovery` | `src/discovery.rs` | Skill discovery via directory walking                        |
+| `git`       | `src/git.rs`       | Git repository detection using git2                          |
+| `paths`     | `src/paths.rs`     | Path configuration loading and expansion (`paths.jsonc`)     |
 
 ### Legacy Modules
 
-| Module      | File               | Responsibility                                                  |
-| ----------- | ------------------ | --------------------------------------------------------------- |
+| Module      | File               | Responsibility                                                                          |
+| ----------- | ------------------ | --------------------------------------------------------------------------------------- |
 | `validator` | `src/validator.rs` | **Deprecated.** Legacy validation logic; wraps the pipeline for backwards compatibility |
 
 ### Public API Surface
@@ -301,7 +301,8 @@ Content validation (Pass 3) warns when skills exceed recommended sizes, encourag
 
 ### Pipeline Orchestration
 
-`run_pipeline()` in `pipeline.rs` runs all five passes sequentially against a single skill path. Each pass receives the parsed state from previous passes as needed and appends its `Vec<Diagnostic>` to the accumulating result. The final `PipelineResult` merges all diagnostics and records overall pass/fail.
+`run_pipeline()` in `pipeline.rs` runs all five passes sequentially against a single skill path. Each pass receives the parsed state from previous passes as needed and appends its `Vec<Diagnostic>` to the accumulating result. The final
+`PipelineResult` merges all diagnostics and records overall pass/fail.
 
 ### Skill Name Normalization
 

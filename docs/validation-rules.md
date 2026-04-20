@@ -12,12 +12,12 @@ The validator runs a five-pass pipeline. Each pass contributes diagnostics that 
 
 The validator uses a four-tier severity model.
 
-| Tier       | Exit code (normal) | Exit code (--strict) | Meaning                                          |
-| ---------- | ------------------ | -------------------- | ------------------------------------------------ |
-| Info       | 0                  | 0                    | Informational or positive reinforcement          |
-| Suggestion | 0                  | 1                    | Best practice guidance — not required            |
-| Warning    | 0                  | 1                    | Likely problem — review recommended              |
-| Error      | 1                  | 1                    | Definite problem — skill is invalid or unsafe    |
+| Tier       | Exit code (normal) | Exit code (--strict) | Meaning                                       |
+| ---------- | ------------------ | -------------------- | --------------------------------------------- |
+| Info       | 0                  | 0                    | Informational or positive reinforcement       |
+| Suggestion | 0                  | 1                    | Best practice guidance — not required         |
+| Warning    | 0                  | 1                    | Likely problem — review recommended           |
+| Error      | 1                  | 1                    | Definite problem — skill is invalid or unsafe |
 
 **Exit code 2** is returned for scan or configuration errors (I/O failures, invalid config file).
 
@@ -29,11 +29,11 @@ In normal mode, only `Error` diagnostics cause a non-zero exit. In `--strict` mo
 
 Skills are classified into three tiers based on file count, subdirectory count, and orchestration fields:
 
-| Tier     | Default thresholds                                              |
-| -------- | --------------------------------------------------------------- |
-| Simple   | Fewer than 3 files, 0 subdirectories, no orchestration fields  |
-| Moderate | 3–5 files, or 1–2 subdirectories                               |
-| Hefty    | 6+ files, 3+ subdirectories, or any orchestration field        |
+| Tier     | Default thresholds                                            |
+| -------- | ------------------------------------------------------------- |
+| Simple   | Fewer than 3 files, 0 subdirectories, no orchestration fields |
+| Moderate | 3–5 files, or 1–2 subdirectories                              |
+| Hefty    | 6+ files, 3+ subdirectories, or any orchestration field       |
 
 Orchestration fields that trigger Hefty classification: `hooks`, `agent`, `context`.
 
@@ -41,17 +41,17 @@ Thresholds are configurable. See `$XDG_CONFIG_HOME/skills-validator/config.toml`
 
 **How escalation works:** Some checks have a `base_severity` of Suggestion but escalate for larger skills. The actual diagnostic severity depends on the skill's tier at validation time.
 
-| Check                      | Simple     | Moderate  | Hefty     |
-| -------------------------- | ---------- | --------- | --------- |
-| Scripts in root            | Suggestion | Warning   | Warning   |
-| Description trigger lang   | Suggestion | Warning   | Error     |
-| Trigger conditions in body | Suggestion | Warning   | Error     |
-| Has examples               | Suggestion | Warning   | Warning   |
-| Behavioral constraints     | Suggestion | Warning   | Warning   |
-| Has gotchas section        | Suggestion | Suggestion| Warning   |
-| Body length exceeded       | Suggestion | Warning   | Error     |
-| Broken reference           | Warning    | Error     | Error     |
-| Orphaned files             | Suggestion | Warning   | Warning   |
+| Check                      | Simple     | Moderate   | Hefty   |
+| -------------------------- | ---------- | ---------- | ------- |
+| Scripts in root            | Suggestion | Warning    | Warning |
+| Description trigger lang   | Suggestion | Warning    | Error   |
+| Trigger conditions in body | Suggestion | Warning    | Error   |
+| Has examples               | Suggestion | Warning    | Warning |
+| Behavioral constraints     | Suggestion | Warning    | Warning |
+| Has gotchas section        | Suggestion | Suggestion | Warning |
+| Body length exceeded       | Suggestion | Warning    | Error   |
+| Broken reference           | Warning    | Error      | Error   |
+| Orphaned files             | Suggestion | Warning    | Warning |
 
 ---
 
@@ -235,7 +235,8 @@ Field `argument-hint` is recognized by Claude Code but may not be used by other 
 
 ### Keyword Detection
 
-The validator checks for directive keywords in skill body content. These checks operate on the prose-only view of the body — code blocks, inline code, and URL text are stripped before matching. Keywords are matched using word-boundary anchors so partial words are not counted (e.g. `whenever` does not satisfy the `never` check).
+The validator checks for directive keywords in skill body content. These checks operate on the prose-only view of the body — code blocks, inline code, and URL text are stripped before matching. Keywords are matched using word-boundary anchors so
+partial words are not counted (e.g. `whenever` does not satisfy the `never` check).
 
 **Behavioral constraints (`never` / `always`):**
 
@@ -286,7 +287,8 @@ Body is 400 lines, exceeding the 300-line limit. Consider splitting into referen
 
 **Rule:** Binary files in a skill directory are an error.
 
-**Detection:** Files are classified as binary if their extension is in a known binary extension list (`.exe`, `.dll`, `.so`, `.dylib`, `.wasm`, `.o`, `.a`, `.pyc`, `.class`, `.obj`, `.lib`, `.bin`, `.elf`) or if the first 8192 bytes contain a null byte.
+**Detection:** Files are classified as binary if their extension is in a known binary extension list (`.exe`, `.dll`, `.so`, `.dylib`, `.wasm`, `.o`, `.a`, `.pyc`, `.class`, `.obj`, `.lib`, `.bin`, `.elf`) or if the first 8192 bytes contain a null
+byte.
 
 **Error message format:**
 
@@ -408,7 +410,8 @@ Pass 4 walks markdown reference chains starting from `SKILL.md` and checks every
 
 ### Chain Walking
 
-The validator follows internal markdown links up to **5 hops** (configurable via `references.markdown_hop_limit`). Fragment identifiers (e.g. `file.md#section`) are stripped before resolving. Backtick-quoted paths in prose text (e.g. `` `docs/setup.md` ``) are also followed.
+The validator follows internal markdown links up to **5 hops** (configurable via `references.markdown_hop_limit`). Fragment identifiers (e.g. `file.md#section`) are stripped before resolving. Backtick-quoted paths in prose text (e.g.
+`` `docs/setup.md` ``) are also followed.
 
 **Hop limit reached** produces an Info diagnostic (not an error). This is informational and does not indicate a problem.
 
@@ -468,14 +471,14 @@ Hooks reference script 'scripts/pre.sh' but the file does not exist.
 
 **Detected patterns:**
 
-| Pattern                  | Example                    |
-| ------------------------ | -------------------------- |
-| `curl ... \| bash`       | `curl https://x.sh \| bash` |
-| `curl ... \| sh`         | `curl https://x.sh \| sh`  |
-| `wget ... \| bash`       | `wget https://x.sh \| bash`|
-| `wget ... \| sh`         | `wget https://x.sh \| sh`  |
-| `bash <(curl ...)`       | `bash <(curl https://x.sh)`|
-| `sh <(curl ...)`         | `sh <(curl https://x.sh)`  |
+| Pattern            | Example                     |
+| ------------------ | --------------------------- |
+| `curl ... \| bash` | `curl https://x.sh \| bash` |
+| `curl ... \| sh`   | `curl https://x.sh \| sh`   |
+| `wget ... \| bash` | `wget https://x.sh \| bash` |
+| `wget ... \| sh`   | `wget https://x.sh \| sh`   |
+| `bash <(curl ...)` | `bash <(curl https://x.sh)` |
+| `sh <(curl ...)`   | `sh <(curl https://x.sh)`   |
 
 **Severity:** Warning for each match.
 
@@ -516,11 +519,11 @@ Semgrep can be disabled via config (`security.semgrep_enabled = false`) or the `
 
 ## Exit Codes
 
-| Exit Code | Meaning                                                        |
-| --------- | -------------------------------------------------------------- |
-| 0         | Success — valid skill (may have suggestions, warnings, or info)|
-| 1         | Failure — validation errors present (or warnings in --strict) |
-| 2         | Scan or configuration error (I/O failure, invalid config file) |
+| Exit Code | Meaning                                                         |
+| --------- | --------------------------------------------------------------- |
+| 0         | Success — valid skill (may have suggestions, warnings, or info) |
+| 1         | Failure — validation errors present (or warnings in --strict)   |
+| 2         | Scan or configuration error (I/O failure, invalid config file)  |
 
 **Note:** In normal mode, only `Error` diagnostics cause exit code 1. In `--strict` mode, `Suggestion` and `Warning` also cause exit code 1.
 

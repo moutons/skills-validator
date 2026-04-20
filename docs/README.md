@@ -34,7 +34,8 @@ Complete documentation for the skills-validator project.
 
 ## Overview
 
-The skills-validator is a Rust CLI tool and library for validating agent skills according to the [Agent Skills specification](https://agentskills.io/specification). It uses a five-pass validation pipeline with configurable severity levels and automatic escalation based on skill complexity.
+The skills-validator is a Rust CLI tool and library for validating agent skills according to the [Agent Skills specification](https://agentskills.io/specification). It uses a five-pass validation pipeline with configurable severity levels and
+automatic escalation based on skill complexity.
 
 ### Key Features
 

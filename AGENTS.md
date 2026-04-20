@@ -93,18 +93,21 @@ src/
 This tool emits diagnostics at four severity tiers: **info**, **suggestion**, **warning**, and **error**.
 
 ### Human-readable output
-Should be personable, friendly, and encouraging — like a knowledgeable friend reviewing your work. Use positive reinforcement for good practices ("Nice — your skill includes a gotchas section, which is one of the highest-value things you can add"), gentle nudges for improvements. The goal is to make skill authors feel supported, not scolded.
+
+Should be personable, friendly, and encouraging — like a knowledgeable friend reviewing your work. Use positive reinforcement for good practices ("Nice — your skill includes a gotchas section, which is one of the highest-value things you can add"),
+gentle nudges for improvements. The goal is to make skill authors feel supported, not scolded.
 
 ### JSON output
+
 Spare and machine-useful. Same data points, no warmth. Keep factual descriptions ("skill includes gotchas section"), drop the encouragement. This output is consumed by CI pipelines, editors, and other tools.
 
 ### Severity tiers
 
-| Tier | Purpose | Exit code |
-|------|---------|-----------|
-| **Info** | Positive reinforcement — "you have this and it's valuable" | 0 |
-| **Suggestion** | Gentle nudge — "consider adding X" | 0 (1 with `--strict`) |
-| **Warning** | Real quality concern affecting agent behavior | 0 (1 with `--strict`) |
-| **Error** | Broken, spec-violating, or dangerous | 1 always |
+| Tier           | Purpose                                                    | Exit code             |
+| -------------- | ---------------------------------------------------------- | --------------------- |
+| **Info**       | Positive reinforcement — "you have this and it's valuable" | 0                     |
+| **Suggestion** | Gentle nudge — "consider adding X"                         | 0 (1 with `--strict`) |
+| **Warning**    | Real quality concern affecting agent behavior              | 0 (1 with `--strict`) |
+| **Error**      | Broken, spec-violating, or dangerous                       | 1 always              |
 
 Severity escalates with skill sizeyness. A check that's a suggestion for a simple skill may become a warning or error for a moderate or hefty one. See design docs for sizeyness tier definitions.

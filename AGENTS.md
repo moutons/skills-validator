@@ -12,6 +12,10 @@ This document outlines project conventions and rules for AI agents working on th
 
 Architectural decisions are documented in `docs/decisions/`. Read these before proposing structural changes — they capture context and rejected alternatives that aren't obvious from the code.
 
+## Git Hooks
+
+This project uses lefthook for pre-commit and pre-push hooks. **Hooks must always pass before committing or pushing — no exceptions.** If a hook reports failures, fix them even if the issues are pre-existing and unrelated to your changes. Never use `--no-verify` to bypass hooks.
+
 ## Code Style
 
 - **Rust**: Follow standard Rust idioms and conventions

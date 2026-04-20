@@ -1,3 +1,8 @@
+pre-commit:
+  commands:
+    ensureci:
+      run: just ensure-ci
+
 pre-push:
   commands:
     ensureci:

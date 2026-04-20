@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 pub mod cli;
 pub mod config;
 pub mod discovery;
@@ -11,8 +13,6 @@ pub mod paths;
 pub mod pipeline;
 pub mod prompt;
 pub mod scan;
-pub mod validator;
-
 pub use config::ValidatorConfig;
 pub use discovery::{discover_skills, DiscoveredSkill, DiscoveryResult};
 pub use formatter::{format_human, format_json};
@@ -23,5 +23,3 @@ pub use paths::{expand_path, PathsConfig, PathsError};
 pub use pipeline::{exit_code, run_pipeline, PipelineResult};
 pub use prompt::to_prompt;
 pub use scan::{find_duplicates, scan, ScanOptions, ScanResult, SkillValidation};
-#[allow(deprecated)]
-pub use validator::{validate, ValidationResult};

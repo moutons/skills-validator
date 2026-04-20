@@ -1,7 +1,9 @@
 pre-commit:
   commands:
-    ensureci:
-      run: just ensure-ci
+    fmtcheck:
+      run: cargo fmt --check
+    mdlint:
+      run: just markdown
 
 pre-push:
   commands:

@@ -238,10 +238,15 @@ pub enum SkillError {
 The primary result type for all pipeline passes. Each diagnostic carries a severity level and a human-readable message:
 
 ```rust
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Diagnostic {
     pub severity: Severity,
-    pub message: String,
+    pub check_name: CheckName,
+    pub human_message: String,
+    pub machine_message: String,
+    pub doc_url: Option<String>,
+    pub file_path: Option<PathBuf>,
+    pub base_severity: Severity,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -253,20 +258,23 @@ pub enum Severity {
 }
 ```
 
-- `Error` diagnostics cause exit code 1 (or exit code 2 in `--strict` mode for warnings)
-- `Warning` diagnostics are reported but do not block by default
-- `Suggestion` and `Info` are informational
+- `Error` diagnostics cause exit code 1
+- `Warning` and `Suggestion` cause exit code 1 only with `--strict`
+- `Info` never causes failure
+- `base_severity` records the original severity before sizeyness escalation
+- `human_message` is warm/encouraging; `machine_message` is terse for JSON/CI
 
-The `--severity` flag controls the minimum level reported. The `--strict` flag promotes warnings to blocking.
+The `--severity` flag controls the minimum level reported. The `--strict` flag promotes warnings and suggestions to blocking.
 
 ### Sizeyness Escalation
 
 Pass 2 classifies each skill by size and emits progressively stronger diagnostics as content grows beyond recommended thresholds:
 
-- Small: no diagnostic
-- Medium: `Suggestion` to consider splitting
-- Large: `Warning`
-- Huge: `Error`
+- Simple: fewer than 3 files, 0 subdirectories, no orchestration fields
+- Moderate: 3+ files or 1+ subdirectories
+- Hefty: 6+ files, 3+ subdirectories, or has orchestration fields (`hooks`, `agent`, `context`)
+
+Sizeyness drives severity escalation: a check that is a `Suggestion` for a Simple skill may become a `Warning` for Moderate or `Error` for Hefty.
 
 ### ValidationResult Pattern (Deprecated)
 
@@ -313,11 +321,11 @@ Pass 2 inspects file content to detect non-text assets accidentally placed insid
 
 ### Sizeyness Classification
 
-Pass 2 measures total content length against configurable thresholds and assigns one of four `Sizeyness` buckets (`Small`, `Medium`, `Large`, `Huge`). The bucket drives diagnostic severity for the progressive disclosure pattern.
+Pass 2 classifies skills into one of three `Sizeyness` tiers (`Simple`, `Moderate`, `Hefty`) based on file count, subdirectory count, and orchestration fields. The tier drives diagnostic severity escalation across all subsequent passes.
 
 ### Field Validation
 
-1. Check for unknown fields (error)
+1. Check for unknown fields (warning)
 2. Check for Claude Code extensions (warning)
 3. Validate required fields with type checking
 4. Validate optional fields if present

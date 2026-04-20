@@ -126,7 +126,7 @@ This is the skill documentation that agents will read when loading the skill.
 | UTF-8 Only       | All text files must be UTF-8 encoded             |
 | YAML Frontmatter | Must start with `---` and close with `---`       |
 | No Windows Paths | Cross-platform compatibility required            |
-| Max Body Lines   | 500 lines recommended for progressive disclosure |
+| Max Body Lines   | 300 lines recommended for progressive disclosure |
 
 ### Content Best Practices (Warnings)
 
@@ -143,7 +143,7 @@ The validator warns when skill content is missing key directive words:
 
 - Scripts in root directory trigger warnings (should be in `scripts/`)
 - Windows-style paths (`C:\`, `\\`) trigger warnings
-- Files exceeding 500 lines trigger warnings
+- Files exceeding 300 lines trigger warnings
 
 ---
 
@@ -176,13 +176,13 @@ Diagnostics are classified into four tiers:
 
 ## Sizeyness Classification
 
-Skills are classified based on file count and total size:
+Skills are classified based on file count, subdirectory count, and orchestration fields:
 
-- **Simple** - 1-5 files, <50 KB
-- **Moderate** - 6-20 files, 50 KB to 1 MB
-- **Hefty** - 20+ files, >1 MB
+- **Simple** - Fewer than 3 files, 0 subdirectories, no orchestration fields
+- **Moderate** - 3+ files or 1+ subdirectories
+- **Hefty** - 6+ files, 3+ subdirectories, or has orchestration fields (`hooks`, `agent`, `context`)
 
-Sizeyness affects severity escalation for warnings on file organization and complexity.
+Sizeyness affects severity escalation: a check that produces a suggestion for a simple skill may escalate to a warning or error for a moderate or hefty one.
 
 ---
 

@@ -11,12 +11,20 @@ The skills-validator uses a comprehensive testing approach combining unit tests 
 ```text
 tests/
 ├── helpers.rs              # Shared test utilities
-├── fixtures_integration.rs # Tests using fixture files
-├── cli_output.rs          # CLI output format validation
-├── validator.rs           # Validation logic unit tests
-├── parser.rs              # Parser unit tests
-├── models.rs              # Data model tests
-└── prompt.rs              # Prompt generation tests
+├── cli_output.rs           # CLI output format tests
+├── config.rs               # Config system tests
+├── fixtures_integration.rs # Tests with fixture files
+├── formatter.rs            # Formatter output tests
+├── models.rs               # Data model tests
+├── parser.rs               # Parser tests
+├── passes_content.rs       # Pass 3: Content checks
+├── passes_parse.rs         # Pass 1: Parse checks
+├── passes_references.rs    # Pass 4: Reference checks
+├── passes_security.rs      # Pass 5: Security checks
+├── passes_structure.rs     # Pass 2: Structure checks
+├── pipeline.rs             # Full pipeline integration tests
+├── prompt.rs               # Prompt generation tests
+└── validator.rs            # Legacy validator tests
 ```
 
 ---
@@ -56,21 +64,19 @@ Tests for complete workflows and CLI behavior.
 **Example:**
 
 ```rust
-// tests/fixtures_integration.rs
+// tests/pipeline.rs
 #[test]
-fn test_valid_skill_directory() {
-    let temp_dir = create_test_skill("valid-skill", r#"
----
-name: valid-skill
-description: A valid test skill
----
+fn valid_minimal_skill_produces_no_errors() {
+    let dir = fixture("valid/minimal/coding-standards");
+    let config = ValidatorConfig::default();
+    let result = run_pipeline(&dir, &config);
 
-Always test your code.
-Never skip validation.
-"#);
-
-    let result = validate(temp_dir.path());
-    assert!(result.errors.is_empty());
+    let errors: Vec<_> = result
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == Severity::Error)
+        .collect();
+    assert!(errors.is_empty());
 }
 ```
 
@@ -156,6 +162,14 @@ cargo test --test validator
 
 ## Test Coverage Areas
 
+### Config Tests (`tests/config.rs`)
+
+- Default configuration values (thresholds, limits)
+- TOML configuration parsing
+- Environment variable overrides
+- Known models list validation
+- Orphan exclusion patterns
+
 ### Validator Tests (`tests/validator.rs`)
 
 - Name validation (format, length, characters)
@@ -184,6 +198,14 @@ cargo test --test validator
 - Optional field handling
 - Metadata mapping
 
+### Formatter Tests (`tests/formatter.rs`)
+
+- Human output with emoji markers (folder icon, severity icons)
+- Severity-based grouping and filtering
+- JSON output with schema_version field
+- Severity filtering in output
+- Summary line generation
+
 ### Prompt Tests (`tests/prompt.rs`)
 
 - XML generation
@@ -191,6 +213,51 @@ cargo test --test validator
 - Multiple skill handling
 - Error handling for invalid skills
 - Empty input handling
+
+### Pipeline Tests (`tests/pipeline.rs`)
+
+- Full pipeline on valid skills (no errors produced)
+- Pipeline orchestration across all five passes
+- Parse failures stop pipeline processing
+- Sizeyness escalation (Simple, Moderate, Hefty)
+- Strict mode enforcement
+
+### Pass 1 (Parse) Tests (`tests/passes_parse.rs`)
+
+- Exact SKILL.md casing requirement
+- Frontmatter extraction and TOML validation
+- Abstract syntax tree (AST) extraction for structure
+- Prose-only view generation (without code blocks)
+
+### Pass 2 (Structure) Tests (`tests/passes_structure.rs`)
+
+- File inventory and statistics
+- Binary file detection
+- Sizeyness boundaries and calculation
+- Subdirectory counting logic
+
+### Pass 3 (Content) Tests (`tests/passes_content.rs`)
+
+- Description length validation
+- Trigger language detection and validation
+- Word-boundary matching for keywords
+- Unknown field detection
+
+### Pass 4 (References) Tests (`tests/passes_references.rs`)
+
+- Link extraction from markdown
+- Broken reference detection
+- Orphan file detection
+- Circular reference detection
+- Markdown hop limit enforcement
+- File path boundary validation
+
+### Pass 5 (Security) Tests (`tests/passes_security.rs`)
+
+- Script detection and flagging
+- Remote execution pattern detection
+- Code block extraction and analysis
+- Semgrep integration (when enabled)
 
 ### Integration Tests (`tests/fixtures_integration.rs`)
 
@@ -202,9 +269,10 @@ cargo test --test validator
 ### CLI Tests (`tests/cli_output.rs`)
 
 - Exit code verification
-- Output format validation
-- Log level filtering
-- JSON output format
+- Output format validation (text vs JSON)
+- --strict flag behavior
+- --output-format flag (human vs json)
+- --severity flag filtering
 - Error message formatting
 
 ---
@@ -215,17 +283,29 @@ cargo test --test validator
 
 ```text
 tests/fixtures/
-├── valid/
-│   └── basic/
-│       └── SKILL.md
-├── invalid/
-│   ├── missing-name/
-│   │   └── SKILL.md
-│   └── bad-format/
-│       └── SKILL.md
-└── edge-cases/
-    └── unicode-name/
-        └── SKILL.md
+├── valid-skill/              # Simple valid skill
+├── invalid-name/             # Invalid name format
+├── missing-description/      # Missing required field
+└── skills/
+    ├── valid/                # Valid skill variants
+    │   ├── minimal/          # Minimal valid skills
+    │   ├── complete/         # Full-featured skills
+    │   └── multi-file/       # Multi-file skills
+    ├── invalid/              # Invalid skill variants
+    │   ├── invalid-name/     # Invalid name format
+    │   ├── missing-frontmatter/
+    │   ├── missing-name/     # Missing required name field
+    │   ├── malformed-toml/   # Invalid TOML syntax
+    │   └── unknown-fields/   # Unrecognized metadata
+    ├── edge-cases/           # Edge case testing
+    │   ├── empty-optional-fields/
+    │   ├── large-file/       # Large file sizeyness testing
+    │   └── unicode-content/  # Unicode handling
+    ├── multi-location/       # Multiple skill locations
+    ├── binary-in-skill/      # Binary file detection
+    ├── broken-ref/           # Broken reference chain
+    ├── circular-ref/         # Circular reference (A→B→A)
+    └── orphaned-files/       # Unreferenced files
 ```
 
 ### Using Fixtures
@@ -233,9 +313,16 @@ tests/fixtures/
 ```rust
 #[test]
 fn test_with_fixture() {
-    let fixture_path = Path::new("tests/fixtures/valid/basic");
-    let result = validate(fixture_path);
-    assert!(result.errors.is_empty());
+    let dir = fixture("valid/minimal/coding-standards");
+    let config = ValidatorConfig::default();
+    let result = run_pipeline(&dir, &config);
+    assert!(result.diagnostics.is_empty());
+}
+
+fn fixture(rel: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/skills")
+        .join(rel)
 }
 ```
 

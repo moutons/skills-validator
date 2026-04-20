@@ -10,6 +10,12 @@ target/
 .vscode/
 *.swp
 *.swo
+.private-journal/
+.cartographer/
+.cartographer.toml
+
+# Worktrees
+.worktrees/
 
 # OS
 .DS_Store

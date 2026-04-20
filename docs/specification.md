@@ -12,7 +12,7 @@ the official spec and Claude Code extensions.
 ### Primary Goals
 
 1. **Validate Skill Compliance**: Ensure agent skill directories conform to the official Agent Skills specification
-2. **Enforce Strict Standards**: Unknown fields cause validation failures, maintaining spec purity
+2. **Enforce Strict Standards**: Unknown fields produce warnings; `--strict` mode fails on any non-info diagnostic
 3. **Generate Agent Prompts**: Create XML-formatted `<available_skills>` blocks for system prompts
 4. **Support Multiple Implementations**: Work with both OpenCode and Claude Code skill formats
 
@@ -36,18 +36,31 @@ the official spec and Claude Code extensions.
 
 ---
 
+## Commands
+
+| Command           | Purpose                                           |
+| ----------------- | ------------------------------------------------- |
+| `validate`        | Validate a single skill directory                 |
+| `scan`            | Discover and validate skills across tool dirs     |
+| `read-properties` | Extract and display skill metadata                |
+| `to-prompt`       | Generate XML-formatted `<available_skills>` block |
+| `setup`           | Initialize configuration and directories          |
+| `completions`     | Generate shell completions for bash/zsh/fish      |
+
+---
+
 ## Specification Compliance
 
 ### Official Spec (agentskills.io)
 
-The validator strictly enforces the official specification. Unknown fields cause validation failures.
+The validator checks against the official specification. Unknown fields produce warnings; Claude Code extensions are recognized separately.
 
 #### Required Fields
 
 | Field         | Constraints                                                                                                                                                           |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`        | Max 64 chars. Lowercase letters, numbers, hyphens. No leading/trailing hyphen. No consecutive hyphens. Must match directory name. Pattern: `^[a-z0-9]+(-[a-z0-9]+)*$` |
-| `description` | Max 1024 chars. Non-empty string.                                                                                                                                     |
+| `description` | Max 250 chars. Non-empty string.                                                                                                                                      |
 
 #### Optional Fields
 
@@ -113,7 +126,7 @@ This is the skill documentation that agents will read when loading the skill.
 | UTF-8 Only       | All text files must be UTF-8 encoded             |
 | YAML Frontmatter | Must start with `---` and close with `---`       |
 | No Windows Paths | Cross-platform compatibility required            |
-| Max Body Lines   | 500 lines recommended for progressive disclosure |
+| Max Body Lines   | 300 lines recommended for progressive disclosure |
 
 ### Content Best Practices (Warnings)
 
@@ -130,7 +143,65 @@ The validator warns when skill content is missing key directive words:
 
 - Scripts in root directory trigger warnings (should be in `scripts/`)
 - Windows-style paths (`C:\`, `\\`) trigger warnings
-- Files exceeding 500 lines trigger warnings
+- Files exceeding 300 lines trigger warnings
+
+---
+
+## Validation Pipeline
+
+Validation runs as a five-pass pipeline:
+
+1. **Parse** - Reads and parses SKILL.md files with YAML frontmatter
+2. **Structure** - Validates skill structure and required fields
+3. **Content** - Analyzes markdown content for quality directives and best practices
+4. **References** - Checks internal references and metadata consistency
+5. **Security** - Scans for security issues using pattern matching and remote execution detection
+
+Each pass produces diagnostics at various severity levels, enabling gradual enforcement.
+
+---
+
+## Diagnostic Severity Tiers
+
+Diagnostics are classified into four tiers:
+
+| Tier       | Meaning                                                           |
+| ---------- | ----------------------------------------------------------------- |
+| Info       | Informational messages, no action required                        |
+| Suggestion | Best practice recommendations, skills pass validation             |
+| Warning    | Violations of content guidelines, skills pass validation          |
+| Error      | Specification violations, causes validation failure (exit code 1) |
+
+---
+
+## Sizeyness Classification
+
+Skills are classified based on file count, subdirectory count, and orchestration fields:
+
+- **Simple** - Fewer than 3 files, 0 subdirectories, no orchestration fields
+- **Moderate** - 3+ files or 1+ subdirectories
+- **Hefty** - 6+ files, 3+ subdirectories, or has orchestration fields (`hooks`, `agent`, `context`)
+
+Sizeyness affects severity escalation: a check that produces a suggestion for a simple skill may escalate to a warning or error for a moderate or hefty one.
+
+---
+
+## Configuration
+
+The validator reads configuration from TOML files at `$XDG_CONFIG_HOME/skills-validator/config.toml` (or `~/.config/skills-validator/config.toml` on Linux/macOS).
+
+Configuration options include severity overrides, enabled passes, and logging levels.
+
+---
+
+## Scan Command
+
+The `scan` command discovers and validates skills across multiple tool directories:
+
+- Searches tool directories (e.g., `~/.claude/tools`, `/usr/local/tools`)
+- Recursively finds skill directories containing SKILL.md
+- Runs the full five-pass pipeline on each skill
+- Aggregates and reports results by directory
 
 ---
 
@@ -141,6 +212,7 @@ The validator warns when skill content is missing key directive words:
 | Crate                 | Version | Purpose                                 |
 | --------------------- | ------- | --------------------------------------- |
 | clap                  | 4.5     | CLI argument parsing with derive macros |
+| clap_complete         | 4.5     | Shell completion generation             |
 | serde                 | 1.0     | Serialization framework                 |
 | serde_yaml            | 0.9     | YAML parsing for frontmatter            |
 | serde_json            | 1.0     | JSON output support                     |
@@ -151,18 +223,23 @@ The validator warns when skill content is missing key directive words:
 | env_logger            | 0.11    | Environment-based logging               |
 | owo-colors            | 4       | Terminal colors                         |
 | regex                 | 1.10    | Pattern matching                        |
+| dirs                  | 6.0     | XDG directory resolution                |
+| git2                  | 0.20    | Git repository detection                |
+| walkdir               | 2.5     | Directory tree walking                  |
+| rayon                 | 1.10    | Parallel validation                     |
+| pulldown-cmark        | 0.12    | Markdown AST parsing                    |
+| toml                  | 0.8     | TOML config file parsing                |
+| tempfile              | 3.10    | Secure temporary files                  |
 
 ### Development Dependencies
 
-| Crate    | Version | Purpose                          |
-| -------- | ------- | -------------------------------- |
-| tempfile | 3.10    | Temporary file creation in tests |
+None (all testing dependencies are development-only)
 
 ---
 
 ## Version
 
-Current: **0.1.7**
+Current: **0.2.0**
 
 See [Cargo.toml](../Cargo.toml) for dependency versions.
 

@@ -1,7 +1,0 @@
-{
-  "gitignore": true,
-  "MD013": {
-    "line_length": 250,
-    "code_blocks": false
-  }
-}

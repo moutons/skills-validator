@@ -11,6 +11,7 @@
   - cargo-audit (security audits)
   - actionlint (workflow linting)
   - zizmor (workflow security)
+  - semgrep (security pass integration)
 
 ### Installation
 
@@ -36,11 +37,25 @@ cargo test
 │   ├── main.rs          # CLI entry point
 │   ├── lib.rs           # Library exports
 │   ├── cli.rs           # CLI commands and argument parsing
+│   ├── config.rs        # Config loading (TOML + env overrides)
+│   ├── discovery.rs     # Skill discovery via directory walking
 │   ├── error.rs         # Error type definitions
-│   ├── models.rs        # Data structures
+│   ├── formatter.rs     # Human and JSON output formatting
+│   ├── git.rs           # Git repository detection
+│   ├── models.rs        # Data structures (Diagnostic, Severity, Sizeyness)
 │   ├── parser.rs        # YAML frontmatter parsing
-│   ├── validator.rs     # Validation logic
-│   └── prompt.rs        # XML prompt generation
+│   ├── passes/          # Five-pass validation pipeline
+│   │   ├── mod.rs       # Pass module exports
+│   │   ├── parse.rs     # Pass 1: Parse
+│   │   ├── structure.rs # Pass 2: Structure
+│   │   ├── content.rs   # Pass 3: Content
+│   │   ├── references.rs# Pass 4: References
+│   │   └── security.rs  # Pass 5: Security
+│   ├── paths.rs         # Path configuration (paths.jsonc)
+│   ├── pipeline.rs      # Pipeline orchestration
+│   ├── prompt.rs        # XML prompt generation
+│   ├── scan.rs          # Scan orchestration
+│   └── validator.rs     # Legacy validation (deprecated)
 ├── tests/               # Integration and unit tests
 ├── docs/                # Documentation
 ├── Cargo.toml           # Rust dependencies
@@ -83,7 +98,7 @@ just clippy               # Run clippy with warnings as errors
 just test                 # Run tests
 
 # Security
-just security             # Run cargo audit
+just security             # Run cargo audit and gitleaks
 
 # Documentation
 just markdown             # Format and lint markdown
@@ -100,6 +115,9 @@ just clean                # Remove build artifacts
 
 # Everything
 just full                 # Run all checks
+
+# Install dependencies
+just deps                 # Fetch dependencies
 ```
 
 ---
@@ -142,14 +160,31 @@ impl From<std::io::Error> for SkillError {
 ```rust
 // lib.rs - Re-export public API
 pub mod cli;
+pub mod config;
+pub mod discovery;
 pub mod error;
+pub mod formatter;
+pub mod git;
 pub mod models;
 pub mod parser;
+pub mod passes;
+pub mod paths;
+pub mod pipeline;
 pub mod prompt;
+pub mod scan;
 pub mod validator;
 
+pub use config::ValidatorConfig;
+pub use discovery::{discover_skills, DiscoveredSkill, DiscoveryResult};
+pub use formatter::{format_human, format_json};
+pub use git::{find_repo_root, GitError};
+pub use models::{Diagnostic, Severity};
 pub use parser::{find_skill_md, parse_frontmatter, read_properties};
+pub use paths::{expand_path, PathsConfig, PathsError};
+pub use pipeline::{exit_code, run_pipeline, PipelineResult};
 pub use prompt::to_prompt;
+pub use scan::{find_duplicates, scan, ScanOptions, ScanResult, SkillValidation};
+#[allow(deprecated)]
 pub use validator::{validate, ValidationResult};
 ```
 
@@ -163,11 +198,19 @@ pub use validator::{validate, ValidationResult};
 tests/
 ├── helpers.rs              # Shared test utilities
 ├── fixtures_integration.rs # Tests with fixture files
-├── cli_output.rs          # CLI output format tests
-├── validator.rs           # Validation logic tests
-├── parser.rs              # Parser tests
-├── models.rs              # Model tests
-└── prompt.rs              # Prompt generation tests
+├── cli_output.rs           # CLI output format tests
+├── config.rs               # Config system tests
+├── formatter.rs            # Formatter tests
+├── models.rs               # Model tests
+├── parser.rs               # Parser tests
+├── passes_content.rs       # Pass 3 tests
+├── passes_parse.rs         # Pass 1 tests
+├── passes_references.rs    # Pass 4 tests
+├── passes_security.rs      # Pass 5 tests
+├── passes_structure.rs     # Pass 2 tests
+├── pipeline.rs             # Pipeline integration tests
+├── prompt.rs               # Prompt generation tests
+└── validator.rs            # Legacy validator tests
 ```
 
 ### Writing Tests
@@ -236,32 +279,36 @@ cargo test validator::
 
 ## Adding New Features
 
-### Adding a Validation Rule
+### Adding a Validation Check
 
-1. **Implement validation function** in `src/validator.rs`:
+1. **Identify the appropriate pass** - Determine which of the five passes should check your rule:
+   - Pass 1 (Parse): Frontmatter structure and key presence
+   - Pass 2 (Structure): Markdown structure and formatting
+   - Pass 3 (Content): Content quality and completeness
+   - Pass 4 (References): Cross-references and links
+   - Pass 5 (Security): Security scanning and risk detection
+
+2. **Implement the check** in the appropriate pass file (e.g., `src/passes/content.rs`):
 
 ```rust
-fn validate_my_rule(skill_dir: &Path) -> ValidationResult {
-    let mut result = ValidationResult::new();
+pub fn check_my_rule(props: &SkillProperties) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
     // validation logic...
-    result
+    if some_check_fails {
+        diagnostics.push(Diagnostic {
+            file: "SKILL.md".to_string(),
+            severity: Severity::Warning,
+            check_name: "my-rule-name".to_string(),
+            message: "Description of the issue".to_string(),
+        });
+    }
+    diagnostics
 }
 ```
 
-1. **Call from main validate function**:
+1. **Integrate into the pass** - Call your check from the main pass function and collect diagnostics
 
-```rust
-pub fn validate(skill_dir: &Path) -> ValidationResult {
-    // existing validations...
-
-    let my_rule_result = validate_my_rule(&skill_dir);
-    result.warnings.extend(my_rule_result.warnings);
-
-    result
-}
-```
-
-1. **Add tests** in `tests/validator.rs`:
+1. **Add tests** in the corresponding test file (e.g., `tests/passes_content.rs`):
 
 ```rust
 #[test]
@@ -354,16 +401,14 @@ cargo build --verbose
 1. **Update version** in `Cargo.toml`:
 
 ```toml
-version = "0.1.8"
+version = "0.2.0"
 ```
 
-1. **Update version** in `src/cli.rs`:
-
-```rust
-#[command(version = "0.1.8")]
-```
+The CLI version is automatically derived from `Cargo.toml` via clap derive macros.
 
 1. **Update README.md** installation instructions
+
+1. **Update documentation** as needed in `docs/`
 
 1. **Run full checks**:
 
@@ -375,8 +420,8 @@ just full
 
 ```bash
 git add -A
-git commit -m "chore(release): bump version to 0.1.8"
-git tag v0.1.8
+git commit -m "chore(release): bump version to 0.2.0"
+git tag v0.2.0
 git push origin main --tags
 ```
 

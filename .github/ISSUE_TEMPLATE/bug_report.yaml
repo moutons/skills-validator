@@ -1,0 +1,73 @@
+name: Bug Report
+about: Report a bug or unexpected behavior
+labels:
+  - bug
+body:
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: One-line description of the bug
+      placeholder: "e.g., validate exits 0 when SKILL.md has invalid frontmatter"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps to reproduce the bug
+      placeholder: |
+        1. Create a skill directory with '...'
+        2. Run 'skills-validator validate ...'
+        3. Observe error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should happen
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happens instead
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: "OS, Rust version, skills-validator version"
+      placeholder: "e.g., macOS 15.3, Rust 1.82, skills-validator 0.2.0"
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Stack trace / logs
+      description: Paste any relevant error output
+      render: shell
+    validations:
+      required: false
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - critical
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+  - type: input
+    id: affected_files
+    attributes:
+      label: Affected files
+      description: File paths related to the bug (helps agents locate the problem)
+      placeholder: "e.g., src/passes/content.rs, src/models.rs"
+    validations:
+      required: false

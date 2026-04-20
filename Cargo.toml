@@ -1,6 +1,6 @@
 [package]
 name = "skills-validator"
-version = "0.1.7"
+version = "0.2.0"
 edition = "2021"
 description = "This tool validates agent skills according to the Agent Skills specification, informed by the OpenCode and Claude Code implementations."
 license = "Apache-2.0"
@@ -13,6 +13,7 @@ path = "src/lib.rs"
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
+clap_complete = "4.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 serde_json = "1.0"
@@ -27,9 +28,11 @@ dirs = "6.0"
 git2 = "0.20"
 walkdir = "2.5"
 rayon = "1.10"
+pulldown-cmark = "0.12"
+toml = "0.8"
+tempfile = "3.10"
 
 [dev-dependencies]
-tempfile = "3.10"
 
 [[bin]]
 name = "skills-validator"

@@ -4,11 +4,14 @@ use std::path::Path;
 use crate::error::SkillError;
 use crate::models::SkillProperties;
 
+/// Find `SKILL.md` with exact casing enforcement.
+/// On case-insensitive filesystems (macOS), verifies via directory listing.
 pub fn find_skill_md(skill_dir: &Path) -> Option<std::path::PathBuf> {
-    for name in &["SKILL.md", "skill.md"] {
-        let path = skill_dir.join(name);
-        if path.exists() {
-            return Some(path);
+    if let Ok(entries) = std::fs::read_dir(skill_dir) {
+        for entry in entries.flatten() {
+            if entry.file_name() == "SKILL.md" {
+                return Some(entry.path());
+            }
         }
     }
     None

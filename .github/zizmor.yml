@@ -3,13 +3,7 @@ rules:
     config:
       policies:
         "dtolnay/rust-toolchain": ref-pin
-  cache-poisoning:
-    ignore:
-      - ci.yml:34
-      - ci.yml:82
-      - ci.yml:112
-      - ci.yml:143
-      - ci.yml:179
+  cache-poisoning: {}  # fixed: PR jobs use cache/restore (read-only), save only on push
   dangerous-triggers:
     ignore:
       - release-plz.yml

@@ -1,15 +1,432 @@
 # API Reference
 
-## Rust Library API
+This document covers the v0.2.0 public API surface of `skills-validator`.
 
-### Module: `parser`
+## Pipeline API
 
-#### `find_skill_md`
+The pipeline API is the primary entry point for validation. It runs all five passes (Parse, Structure, Content, References, Security) in sequence and returns a structured result.
 
-Finds the SKILL.md file in a skill directory.
+### `run_pipeline`
+
+Run the full validation pipeline against a skill directory.
 
 ```rust
-pub fn find_skill_md(skill_dir: &Path) -> Option<std::path::PathBuf>
+pub fn run_pipeline(skill_dir: &Path, config: &ValidatorConfig) -> PipelineResult
+```
+
+**Parameters:**
+
+- `skill_dir: &Path` - Path to the skill directory containing `SKILL.md`
+- `config: &ValidatorConfig` - Validator configuration (use `ValidatorConfig::default()` for defaults)
+
+**Returns:** `PipelineResult`
+
+**Behavior:**
+
+- Pass 1 (Parse) is fatal: if SKILL.md cannot be found or parsed, returns immediately with an error diagnostic.
+- Passes 2–5 run independently even if a prior pass emits diagnostics.
+
+---
+
+### `PipelineResult`
+
+```rust
+#[derive(Debug, Clone)]
+pub struct PipelineResult {
+    pub diagnostics: Vec<Diagnostic>,
+    pub skill_name: Option<String>,
+    pub sizeyness: Sizeyness,
+    pub sizeyness_reasons: Vec<String>,
+}
+```
+
+**Fields:**
+
+- `diagnostics` - All diagnostics produced by all passes
+- `skill_name` - Skill name extracted from frontmatter `name` field, if present
+- `sizeyness` - Complexity tier: `Simple`, `Moderate`, or `Hefty`
+- `sizeyness_reasons` - Human-readable reasons for the sizeyness classification (e.g. `["4 files", "1 subdirectory"]`)
+
+---
+
+### `exit_code`
+
+Compute the appropriate process exit code from pipeline diagnostics.
+
+```rust
+pub fn exit_code(diagnostics: &[Diagnostic], strict: bool) -> i32
+```
+
+**Parameters:**
+
+- `diagnostics` - Slice of diagnostics from `PipelineResult`
+- `strict` - If `true`, treat `Warning` and `Suggestion` as failures
+
+**Returns:**
+
+- `1` if any `Error`-severity diagnostic exists
+- `1` (strict mode only) if any `Warning` or `Suggestion` diagnostic exists
+- `0` otherwise
+
+---
+
+### `Diagnostic`
+
+A single validation finding.
+
+```rust
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Diagnostic {
+    pub severity: Severity,
+    pub check_name: CheckName,
+    pub human_message: String,
+    pub machine_message: String,
+    pub doc_url: Option<String>,
+    pub file_path: Option<PathBuf>,
+    pub base_severity: Severity,
+}
+```
+
+**Fields:**
+
+- `severity` - Effective severity (may be escalated from `base_severity`)
+- `check_name` - Machine-readable check identifier (serializes as kebab-case)
+- `human_message` - Warm, descriptive message for human-readable output
+- `machine_message` - Terse message for JSON/machine output
+- `doc_url` - Optional URL to documentation for this check
+- `file_path` - Optional path to the file that triggered this diagnostic
+- `base_severity` - Unescalated severity before any pipeline adjustments
+
+---
+
+### `Severity`
+
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Severity {
+    Info,
+    Suggestion,
+    Warning,
+    Error,
+}
+```
+
+Severity levels in ascending order. `Severity` implements `PartialOrd`, so `Info < Suggestion < Warning < Error`.
+
+`Severity` also implements `FromStr` (accepts `"info"`, `"suggestion"`, `"warning"`, `"error"`) and `Display`.
+
+---
+
+### `Sizeyness`
+
+```rust
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Sizeyness {
+    #[default]
+    Simple,
+    Moderate,
+    Hefty,
+}
+```
+
+Complexity tier for a skill. Determined by file count, subdirectory count, and presence of orchestration frontmatter fields (`hooks`, `agent`, `context`).
+
+**Thresholds (defaults):**
+
+| Tier     | Condition                                                    |
+| -------- | ------------------------------------------------------------ |
+| Simple   | < 3 files, 0 subdirectories, no orchestration fields         |
+| Moderate | >= 3 files or >= 1 subdirectory                              |
+| Hefty    | >= 6 files, >= 3 subdirectories, or has orchestration fields |
+
+---
+
+### `ValidatorConfig`
+
+Top-level configuration struct. All fields have sane defaults and can be overridden via config file, environment variables, or by constructing manually.
+
+```rust
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
+pub struct ValidatorConfig {
+    pub sizeyness: SizeynessConfig,
+    pub content: ContentConfig,
+    pub references: ReferencesConfig,
+    pub security: SecurityConfig,
+}
+```
+
+**Sub-structs and defaults:**
+
+`SizeynessConfig`:
+
+| Field                       | Default |
+| --------------------------- | ------- |
+| `moderate_file_threshold`   | `3`     |
+| `hefty_file_threshold`      | `6`     |
+| `moderate_subdir_threshold` | `1`     |
+| `hefty_subdir_threshold`    | `3`     |
+
+`ContentConfig`:
+
+| Field             | Default                                                                 |
+| ----------------- | ----------------------------------------------------------------------- |
+| `body_line_limit` | `300`                                                                   |
+| `known_models`    | `["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"]` |
+
+`ReferencesConfig`:
+
+| Field                | Default                                                     |
+| -------------------- | ----------------------------------------------------------- |
+| `markdown_hop_limit` | `5`                                                         |
+| `orphan_exclusions`  | `["LICENSE*", "CHANGELOG*", "README*", ".gitignore", ".*"]` |
+
+`SecurityConfig`:
+
+| Field              | Default     |
+| ------------------ | ----------- |
+| `semgrep_enabled`  | `true`      |
+| `semgrep_path`     | `"semgrep"` |
+| `custom_rules_dir` | `""`        |
+
+**Config loading:**
+
+```rust
+// Load from XDG config file + env var overrides
+pub fn load() -> (ValidatorConfig, Vec<Diagnostic>)
+
+// Load from a TOML string (useful for testing)
+pub fn load_from_str(toml_str: &str) -> (ValidatorConfig, Vec<Diagnostic>)
+```
+
+**Config file location:** `$XDG_CONFIG_HOME/skills-validator/config.toml`
+
+**Environment variable overrides** use the pattern `SKILLS_VALIDATOR_<SECTION>_<KEY>` (uppercase). For example: `SKILLS_VALIDATOR_CONTENT_BODY_LINE_LIMIT=500`.
+
+---
+
+## Formatter API
+
+### `format_human`
+
+Format pipeline results for human consumption.
+
+```rust
+pub fn format_human(result: &PipelineResult, skill_dir: &Path, min_severity: Severity) -> String
+```
+
+**Parameters:**
+
+- `result` - Pipeline result to format
+- `skill_dir` - Used to derive the skill label if `skill_name` is absent
+- `min_severity` - Diagnostics below this severity are filtered out
+
+**Output:** Grouped by severity (Info, Suggestion, Warning, Error) with a summary line. Falls back to the directory name when `skill_name` is `None`.
+
+---
+
+### `format_json`
+
+Format pipeline results as JSON.
+
+```rust
+pub fn format_json(
+    result: &PipelineResult,
+    skill_dir: &Path,
+    min_severity: Severity,
+    strict: bool,
+) -> String
+```
+
+**Parameters:**
+
+- `result` - Pipeline result to format
+- `skill_dir` - Used to relativize file paths in diagnostics and as fallback skill label
+- `min_severity` - Diagnostics below this severity are filtered from the output
+- `strict` - Passed to `exit_code()` for the `exit_code` field in output
+
+**Output schema (`schema_version: 2`):**
+
+```json
+{
+  "schema_version": 2,
+  "skill": "my-skill",
+  "path": "/path/to/my-skill",
+  "sizeyness": "moderate",
+  "sizeyness_reasons": ["4 files", "1 subdirectory"],
+  "diagnostics": [
+    {
+      "check": "binary-detected",
+      "severity": "error",
+      "message": "binary detected: lib/helper.so",
+      "file": "lib/helper.so"
+    }
+  ],
+  "summary": {
+    "errors": 1,
+    "warnings": 0,
+    "suggestions": 1,
+    "info": 2
+  },
+  "exit_code": 1
+}
+```
+
+Notes:
+
+- `diagnostics[].message` uses `machine_message`, not `human_message`
+- `diagnostics[].file` is relative to `skill_dir`, omitted if absent
+- `exit_code` is computed from all diagnostics (unfiltered by `min_severity`)
+
+---
+
+## Scan API
+
+### `scan` (library)
+
+Scan one or more tool directories for skills and validate each one.
+
+```rust
+pub fn scan(options: &ScanOptions) -> ScanResult
+```
+
+Validation runs in parallel using Rayon. Uses `ValidatorConfig::default()`.
+
+---
+
+### `ScanOptions`
+
+```rust
+#[derive(Debug, Clone, Default)]
+pub struct ScanOptions {
+    pub all: bool,
+    pub user: bool,
+    pub repo: bool,
+    pub tools: Vec<String>,
+    pub verbose: bool,
+}
+```
+
+**Fields:**
+
+- `all` - Scan all locations (user home + repo root)
+- `user` - Scan only user home directories
+- `repo` - Scan only the git repository root (requires a git repo)
+- `tools` - Filter to specific tool names; empty means all tools
+- `verbose` - Include verbose per-skill output (reserved for future use)
+
+---
+
+### `ScanResult`
+
+```rust
+#[derive(Debug, Clone, Default)]
+pub struct ScanResult {
+    pub skills: Vec<SkillValidation>,
+    pub total_skills: usize,
+    pub valid_count: usize,
+    pub invalid_count: usize,
+    pub warning_count: usize,
+    pub scanned_dirs: Vec<PathBuf>,
+    pub skipped_dirs: Vec<PathBuf>,
+}
+```
+
+**Fields:**
+
+- `skills` - All discovered skills with their validation results
+- `total_skills` - Total number of skills found
+- `valid_count` - Skills with no errors
+- `invalid_count` - Skills with at least one error
+- `warning_count` - Valid skills that have at least one warning
+- `scanned_dirs` - Directories that were walked
+- `skipped_dirs` - Directories that were skipped (do not exist or not accessible)
+
+---
+
+### `SkillValidation`
+
+```rust
+#[derive(Debug, Clone)]
+pub struct SkillValidation {
+    pub skill: DiscoveredSkill,
+    pub validation: ValidationResult,    // deprecated
+    pub pipeline_result: Option<PipelineResult>,
+    pub is_valid: bool,
+}
+```
+
+**Fields:**
+
+- `skill` - The discovered skill metadata
+- `validation` - Legacy `ValidationResult` (deprecated, for backward compatibility)
+- `pipeline_result` - Full pipeline result; `None` only in error paths
+- `is_valid` - `true` when no `Error`-severity diagnostics exist
+
+---
+
+### `find_duplicates`
+
+Find skills with the same directory name appearing in more than one location.
+
+```rust
+pub fn find_duplicates(result: &ScanResult) -> Vec<Vec<&SkillValidation>>
+```
+
+Returns a list of groups; each group contains two or more `SkillValidation` references sharing the same directory name.
+
+---
+
+### `discover_skills`
+
+Discover all `SKILL.md` files under a set of directories.
+
+```rust
+pub fn discover_skills(directories: &[(String, PathBuf)]) -> DiscoveryResult
+```
+
+**Parameters:**
+
+- `directories` - Slice of `(tool_name, expanded_path)` tuples
+
+Walks each directory recursively. Directories that do not exist are recorded in `DiscoveryResult::skipped_dirs` rather than returning an error.
+
+---
+
+### `DiscoveredSkill`
+
+```rust
+#[derive(Debug, Clone)]
+pub struct DiscoveredSkill {
+    pub path: PathBuf,         // Path to SKILL.md
+    pub tool_name: String,     // Tool this skill belongs to
+    pub directory: PathBuf,    // Parent directory (skill root)
+}
+```
+
+---
+
+### `DiscoveryResult`
+
+```rust
+#[derive(Debug, Clone, Default)]
+pub struct DiscoveryResult {
+    pub skills: Vec<DiscoveredSkill>,
+    pub skipped_dirs: Vec<PathBuf>,
+}
+```
+
+---
+
+## Parser API
+
+### `find_skill_md`
+
+Find `SKILL.md` with exact casing enforcement.
+
+```rust
+pub fn find_skill_md(skill_dir: &Path) -> Option<PathBuf>
 ```
 
 **Parameters:**
@@ -18,20 +435,16 @@ pub fn find_skill_md(skill_dir: &Path) -> Option<std::path::PathBuf>
 
 **Returns:**
 
-- `Some(PathBuf)` - Path to SKILL.md or skill.md
-- `None` - If neither file exists
+- `Some(PathBuf)` - Path to the `SKILL.md` file
+- `None` - No file named exactly `SKILL.md` exists
 
-**Behavior:**
-
-- Checks for `SKILL.md` first (preferred)
-- Falls back to `skill.md` (lowercase)
-- Returns canonical path
+**Important:** This function enforces exact `SKILL.md` casing. On case-insensitive filesystems (macOS), it verifies the casing by reading the directory listing. It does **not** fall back to `skill.md` or other casings.
 
 ---
 
-#### `parse_frontmatter`
+### `parse_frontmatter`
 
-Parses YAML frontmatter from SKILL.md content.
+Parse YAML frontmatter from `SKILL.md` content.
 
 ```rust
 pub fn parse_frontmatter(content: &str) -> Result<(serde_yaml::Value, String), SkillError>
@@ -39,40 +452,25 @@ pub fn parse_frontmatter(content: &str) -> Result<(serde_yaml::Value, String), S
 
 **Parameters:**
 
-- `content: &str` - Full content of SKILL.md
+- `content: &str` - Full content of `SKILL.md`
 
 **Returns:**
 
-- `Ok((metadata, body))` - Parsed YAML and body content
+- `Ok((metadata, body))` - Parsed YAML value and body text (trimmed)
 - `Err(SkillError)` - Parse error with message
 
 **Errors:**
 
-- Content doesn't start with `---`
-- Frontmatter not properly closed
+- Content does not start with `---`
+- Frontmatter is not properly closed with `---`
 - Invalid YAML syntax
-- Metadata is not a YAML mapping
+- Frontmatter is not a YAML mapping
 
 ---
 
-#### `parse_frontmatter_and_body`
+### `read_properties`
 
-Convenience function returning a YAML mapping directly.
-
-```rust
-pub fn parse_frontmatter_and_body(content: &str) -> Result<(serde_yaml::Mapping, String), SkillError>
-```
-
-**Returns:**
-
-- `Ok((map, body))` - YAML mapping and body content
-- `Err(SkillError)` - If metadata is not a valid mapping
-
----
-
-#### `read_properties`
-
-Reads and validates skill properties from a directory.
+Read and validate skill properties from a directory.
 
 ```rust
 pub fn read_properties(skill_dir: &Path) -> Result<SkillProperties, SkillError>
@@ -84,113 +482,20 @@ pub fn read_properties(skill_dir: &Path) -> Result<SkillProperties, SkillError>
 
 **Returns:**
 
-- `Ok(SkillProperties)` - Parsed properties
-- `Err(SkillError)` - If SKILL.md missing or invalid
+- `Ok(SkillProperties)` - Parsed and validated properties
+- `Err(SkillError)` - If `SKILL.md` is missing, unreadable, or invalid
 
-**Required fields:**
+**Required frontmatter fields:** `name`, `description` (both must be non-empty strings)
 
-- `name` - Non-empty string
-- `description` - Non-empty string
-
-**Optional fields:**
-
-- `license`
-- `compatibility`
-- `allowed-tools`
-- `metadata` - HashMap<String, String>
+**Optional frontmatter fields:** `license`, `compatibility`, `allowed-tools`, `metadata`
 
 ---
 
-### Module: `validator`
+## Prompt API
 
-#### `validate`
+### `to_prompt`
 
-Main validation function for a skill directory.
-
-```rust
-pub fn validate(skill_dir: &Path) -> ValidationResult
-```
-
-**Parameters:**
-
-- `skill_dir: &Path` - Path to skill directory
-
-**Returns:** `ValidationResult` with:
-
-- `errors: Vec<String>` - Validation errors
-- `warnings: Vec<String>` - Validation warnings
-
-**Validation checks:**
-
-1. Directory exists
-2. SKILL.md exists
-3. Frontmatter parses correctly
-4. Required fields present (name, description)
-5. Name format validation (regex, length, case)
-6. Name matches directory name
-7. Description length (max 1024 chars)
-8. Compatibility length (max 500 chars)
-9. Unknown fields detection
-10. Claude Code extension warnings
-11. Content keywords (never, always, when, example)
-12. Body length (max 500 lines warning)
-13. Windows path detection
-14. Scripts in root directory
-
----
-
-#### `validate_metadata`
-
-Validates frontmatter metadata fields.
-
-```rust
-pub fn validate_metadata(metadata: &serde_yaml::Mapping, skill_dir: Option<&Path>) -> ValidationResult
-```
-
-**Parameters:**
-
-- `metadata: &serde_yaml::Mapping` - Parsed frontmatter
-- `skill_dir: Option<&Path>` - Optional directory for name matching
-
-**Returns:** `ValidationResult` with errors and warnings
-
----
-
-#### `ValidationResult`
-
-Result container for validation.
-
-```rust
-#[derive(Debug, Clone, PartialEq)]
-pub struct ValidationResult {
-    pub errors: Vec<String>,
-    pub warnings: Vec<String>,
-}
-
-impl ValidationResult {
-    pub fn new() -> Self;
-}
-
-impl Default for ValidationResult;
-```
-
-**Methods:**
-
-- `new()` - Creates empty result
-- `default()` - Same as new()
-
-**Fields:**
-
-- `errors` - Fatal validation errors (block validation)
-- `warnings` - Non-fatal issues (don't block validation)
-
----
-
-### Module: `prompt`
-
-#### `to_prompt`
-
-Generates `<available_skills>` XML block for agent prompts.
+Generate `<available_skills>` XML for agent prompts.
 
 ```rust
 pub fn to_prompt(skill_dirs: &[&str]) -> String
@@ -200,9 +505,7 @@ pub fn to_prompt(skill_dirs: &[&str]) -> String
 
 - `skill_dirs: &[&str]` - Slice of skill directory paths
 
-**Returns:**
-
-- XML string with escaped content
+**Returns:** XML string with HTML-escaped content.
 
 **Output format:**
 
@@ -224,94 +527,155 @@ What this skill does...
 
 **Notes:**
 
-- HTML-escapes name and description
-- Skips skills that fail to read
-- Outputs to stderr on read failures
+- HTML-escapes `name` and `description`
+- Skips skills that fail to read; logs failures to stderr
 
 ---
 
-### Module: `models`
+## Infrastructure API
 
-#### `SkillProperties`
+### `find_repo_root`
 
-Data structure for skill metadata.
-
-```rust
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SkillProperties {
-    pub name: String,
-    pub description: String,
-    pub license: Option<String>,
-    pub compatibility: Option<String>,
-    pub allowed_tools: Option<String>,
-    pub metadata: HashMap<String, String>,
-}
-```
-
-**Fields:**
-
-- `name` - Skill identifier (required)
-- `description` - Skill description (required)
-- `license` - License identifier (optional)
-- `compatibility` - Version requirements (optional)
-- `allowed_tools` - Pre-approved tools (optional)
-- `metadata` - Additional key-value pairs (optional)
-
-**Methods:**
+Find the root of the git repository containing the given path.
 
 ```rust
-impl SkillProperties {
-    /// Convert to YAML mapping for serialization
-    pub fn to_dict(&self) -> serde_yaml::Value;
-}
+pub fn find_repo_root(start: Option<&Path>) -> Result<PathBuf, GitError>
 ```
 
-**Serialization:**
+**Parameters:**
 
-- Uses `#[serde(skip_serializing_if = "Option::is_none")]` for optional fields
-- Metadata serializes as nested mapping
+- `start` - Starting path for repository discovery; uses `$CWD` if `None`
+
+**Returns:**
+
+- `Ok(PathBuf)` - Absolute path to the repository working directory
+- `Err(GitError)` - If no git repository is found
 
 ---
 
-### Module: `error`
-
-#### `SkillError`
-
-Error types for the library.
+### `GitError`
 
 ```rust
-#[derive(Error, Debug)]
-pub enum SkillError {
-    #[error("Failed to parse SKILL.md: {0}")]
-    ParseError(String),
-
-    #[error("Skill validation failed: {0}")]
-    ValidationError(String),
+#[derive(Debug, Error)]
+pub enum GitError {
+    #[error("Git error: {0}")]
+    LibError(#[from] git2::Error),
 }
 ```
 
-**Variants:**
+---
 
-- `ParseError` - YAML parsing, file I/O errors
-- `ValidationError` - Validation rule violations
+### `expand_path`
 
-**Conversions:**
+Expand path variables in a template string.
 
-- `From<std::io::Error>` - I/O errors become ParseError
-- `From<serde_yaml::Error>` - YAML errors become ParseError
+```rust
+pub fn expand_path(template: &str, repo_root: Option<&PathBuf>) -> Result<PathBuf, PathsError>
+```
+
+**Supported variables:**
+
+| Variable     | Expands to                        |
+| ------------ | --------------------------------- |
+| `~`          | User home directory               |
+| `$HOME`      | User home directory               |
+| `$REPO_ROOT` | Git repository root (if provided) |
+| `$CWD`       | Current working directory         |
+
+---
+
+### `PathsConfig`
+
+Configuration containing tool directory templates, loaded from the embedded `paths.jsonc`.
+
+```rust
+pub struct PathsConfig {
+    pub tools: HashMap<String, ToolConfig>,
+}
+
+impl PathsConfig {
+    pub fn load() -> Result<Self, PathsError>;
+    pub fn get_tool(&self, name: &str) -> Option<&ToolConfig>;
+    pub fn tool_names(&self) -> Vec<String>;
+    pub fn has_tool(&self, name: &str) -> bool;
+}
+```
+
+Tool names are normalized to kebab-case. `get_tool` and `has_tool` accept any casing.
+
+---
+
+### `PathsError`
+
+```rust
+#[derive(Debug, Error)]
+pub enum PathsError {
+    #[error("Failed to parse paths.jsonc: {0}")]
+    ParseError(#[from] serde_json::Error),
+
+    #[error("Home directory not found")]
+    HomeNotFound,
+
+    #[error("Repository root not provided but required by path template")]
+    RepoRootNotProvided,
+
+    #[error("Invalid path: {0}")]
+    InvalidPath(String),
+}
+```
+
+---
+
+## Legacy API
+
+The following items are **deprecated** as of v0.2.0. They remain for backward compatibility but will be removed in a future release. Use the Pipeline API instead.
+
+### `validate` (deprecated)
+
+```rust
+#[deprecated]
+pub fn validate(skill_dir: &Path) -> ValidationResult
+```
+
+Use `run_pipeline(skill_dir, &ValidatorConfig::default())` instead.
+
+---
+
+### `ValidationResult` (deprecated)
+
+```rust
+#[deprecated]
+#[derive(Debug, Clone)]
+pub struct ValidationResult {
+    pub errors: Vec<String>,
+    pub warnings: Vec<String>,
+}
+```
+
+Use `PipelineResult` and `Diagnostic` instead.
 
 ---
 
 ## CLI API
 
-### Commands
+### Global Options
 
-#### `validate` (CLI)
+| Option            | Short | Description                                                                                                                        |
+| ----------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `--log-level`     | `-l`  | Set log level: `error`, `warn`, `info`, `debug` (default: `info`)                                                                  |
+| `--output-format` |       | Output format for `validate`: `human` (default) or `json`                                                                          |
+| `--severity`      |       | Minimum severity to display: `info` (default), `suggestion`, `warning`, `error`                                                    |
+| `--strict`        |       | Promote warnings and suggestions to exit code 1                                                                                    |
+| `--json`          |       | **Deprecated.** Alias for `--output-format json`. Previously wrote JSON log lines to stderr; now writes structured JSON to stdout. |
 
-Validate a skill directory.
+---
+
+### `validate`
+
+Validate a skill directory against the Agent Skills spec.
 
 ```bash
-skills-validator validate <PATH>
+skills-validator [OPTIONS] validate <PATH>
 ```
 
 **Arguments:**
@@ -320,46 +684,86 @@ skills-validator validate <PATH>
 
 **Exit codes:**
 
-- `0` - Valid (may have warnings)
-- `1` - Invalid (errors present)
+- `0` - Valid (no errors; warnings are present only if `--strict` is not set)
+- `1` - Invalid (errors present, or warnings/suggestions present with `--strict`)
+- `2` - Scan/config error (could not load configuration)
 
 **Output:**
 
-- stdout: Validation result message
-- stderr: Log messages and errors
+- stdout: Validation result (human text or JSON, controlled by `--output-format`)
+- stderr: Log messages
+
+**Examples:**
+
+```bash
+# Human output (default)
+skills-validator validate ~/.claude/skills/my-skill
+
+# JSON output for CI
+skills-validator --output-format json validate ~/.claude/skills/my-skill
+
+# Fail on warnings too
+skills-validator --strict validate ~/.claude/skills/my-skill
+
+# Show only errors and warnings
+skills-validator --severity warning validate ~/.claude/skills/my-skill
+```
 
 ---
 
-#### `read-properties`
+### `scan` (CLI)
 
-Parse and output skill properties as YAML.
+Scan for skills across multiple tool directories.
+
+```bash
+skills-validator scan [--all | --user | --repo] [--tool <NAMES>] [--dry-run] [--verbose]
+```
+
+**Scope flags (mutually exclusive):**
+
+| Flag     | Description                                     |
+| -------- | ----------------------------------------------- |
+| `--all`  | Scan all locations (user home + repo root)      |
+| `--user` | Scan `$HOME`-based tool directories             |
+| `--repo` | Scan repo-root-based directories (requires git) |
+
+**Other flags:**
+
+| Flag             | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `--tool <NAMES>` | Comma-separated tool names to scan             |
+| `--dry-run`      | Print what would be scanned without validating |
+| `--verbose`      | Show detailed output per skill                 |
+
+**Exit codes:**
+
+- `0` - All discovered skills are valid
+- `1` - At least one skill is invalid
+- `2` - Could not load paths configuration or unknown tool specified
+
+---
+
+### `read-properties`
+
+Parse and output skill frontmatter as YAML.
 
 ```bash
 skills-validator read-properties <PATH>
 ```
 
-**Arguments:**
-
-- `PATH` - Path to skill directory
-
-**Output:**
-
-- stdout: YAML formatted properties
-- stderr: Log messages
-
-**Example output:**
+**Output (stdout):** YAML-formatted properties
 
 ```yaml
 name: my-skill
 description: What this skill does
 license: Apache-2.0
 metadata:
-  author: John Doe
+  author: Jane Doe
 ```
 
 ---
 
-#### `to-prompt`
+### `to-prompt`
 
 Generate `<available_skills>` XML for agent prompts.
 
@@ -369,42 +773,42 @@ skills-validator to-prompt <PATH>...
 
 **Arguments:**
 
-- `PATH...` - One or more skill directory paths
-
-**Output:**
-
-- stdout: XML block
-- stderr: Warnings for unreadable skills
+- `PATH...` - One or more skill directory paths (glob-friendly)
 
 ---
 
-### Global Options
+### `setup`
 
-| Option        | Short | Description                                             |
-| ------------- | ----- | ------------------------------------------------------- |
-| `--log-level` | `-l`  | Set log level: error, warn, info, debug (default: info) |
-| `--json`      |       | Output logs as JSON to stderr                           |
+Write a commented default config file to `$XDG_CONFIG_HOME/skills-validator/config.toml`.
 
-**Log levels:**
+```bash
+skills-validator setup
+```
 
-- `error` - Show only errors
-- `warn` - Show warnings and errors (default)
-- `info` - Show informational messages
-- `debug` - Show detailed debug info
+Exits with an error if the file already exists. Remove it first to regenerate.
+
+---
+
+### `completions`
+
+Generate shell completion scripts.
+
+```bash
+skills-validator completions <SHELL>
+```
+
+**Arguments:**
+
+- `SHELL` - One of: `bash`, `zsh`, `fish`, `elvish`, `powershell`
 
 ---
 
 ### Output Streams
 
-| Stream | Content                                      |
-| ------ | -------------------------------------------- |
-| stdout | Data/results (YAML, XML, validation results) |
-| stderr | All log messages (INFO, WARN, DEBUG, errors) |
-
-**Best practice:**
-
-- Parse stdout for programmatic use
-- Read stderr for diagnostics
+| Stream | Content                                           |
+| ------ | ------------------------------------------------- |
+| stdout | Data/results (validation output, YAML, XML, JSON) |
+| stderr | Log messages (INFO, WARN, DEBUG, errors)          |
 
 ---
 
@@ -413,39 +817,57 @@ skills-validator to-prompt <PATH>...
 ### Library Usage
 
 ```rust
-use skills_validator::{validate, read_properties, to_prompt};
+use skills_validator::{run_pipeline, format_human, format_json};
+use skills_validator::{ValidatorConfig, Severity};
 use std::path::Path;
 
+// Load config (reads XDG config file + env vars)
+let (config, config_diags) = skills_validator::config::load();
+
 // Validate a skill
-let result = validate(Path::new("my-skill"));
-if !result.errors.is_empty() {
-    println!("Errors: {:?}", result.errors);
-}
-for warning in &result.warnings {
-    println!("Warning: {}", warning);
-}
+let skill_dir = Path::new("my-skill");
+let result = run_pipeline(skill_dir, &config);
 
-// Read properties
-let props = read_properties(Path::new("my-skill")).unwrap();
-println!("{}: {}", props.name, props.description);
+// Human-readable output
+let human = format_human(&result, skill_dir, Severity::Info);
+print!("{}", human);
 
-// Generate prompt
-let prompt = to_prompt(&["skill-a", "skill-b"]);
-println!("{}", prompt);
+// JSON output (e.g., for CI)
+let json = format_json(&result, skill_dir, Severity::Info, false);
+println!("{}", json);
+
+// Determine exit code
+let code = skills_validator::pipeline::exit_code(&result.diagnostics, false);
+std::process::exit(code);
 ```
 
 ### CLI Usage
 
 ```bash
-# Validate with verbose logging
-skills-validator -l debug validate ./my-skill
+# Validate with default human output
+skills-validator validate ./my-skill
 
-# Output as JSON for CI
-skills-validator --json validate ./my-skill
+# Validate and output structured JSON
+skills-validator --output-format json validate ./my-skill
 
-# Read properties
-skills-validator read-properties ~/.agents/skills/rust
+# Strict mode: warnings are failures
+skills-validator --strict validate ./my-skill
 
-# Generate prompt for multiple skills
-skills-validator to-prompt ~/.agents/skills/*
+# Scan all known tool directories
+skills-validator scan --all
+
+# Scan only Claude Code skills in the current repo
+skills-validator scan --repo --tool claude-code
+
+# Read frontmatter properties
+skills-validator read-properties ~/.claude/skills/my-skill
+
+# Generate prompt XML for multiple skills
+skills-validator to-prompt ~/.claude/skills/*
+
+# Write default config
+skills-validator setup
+
+# Generate zsh completions
+skills-validator completions zsh > ~/.zfunc/_skills-validator
 ```

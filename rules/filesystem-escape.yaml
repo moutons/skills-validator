@@ -1,0 +1,26 @@
+rules:
+  - id: path-traversal
+    patterns:
+      - pattern-regex: "\\.\\./|\\.\\.\\\\|\\.\\.%2[fF]"
+    message: >
+      Path traversal pattern detected. This may allow access to files
+      outside the intended directory.
+    languages: [bash, python, ruby, javascript, typescript]
+    severity: WARNING
+
+  - id: absolute-path-unix
+    patterns:
+      - pattern-regex: "(?:open|read|write|exec|source|\\.)\\s+[\"']?/(?:etc|tmp|var|usr|home|root|proc|sys)/"
+    message: >
+      Absolute path to a system directory detected. Skills should operate
+      within the project directory.
+    languages: [bash, python, ruby, javascript, typescript]
+    severity: WARNING
+
+  - id: absolute-path-windows
+    patterns:
+      - pattern-regex: "[A-Z]:\\\\(?:Windows|Users|Program Files)"
+    message: >
+      Absolute Windows path detected. Skills should use relative paths.
+    languages: [bash, python, ruby, javascript, typescript]
+    severity: WARNING

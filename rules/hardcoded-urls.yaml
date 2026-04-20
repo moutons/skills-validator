@@ -1,0 +1,17 @@
+rules:
+  - id: hardcoded-http-url
+    patterns:
+      - pattern-regex: "https?://(?!localhost|127\\.0\\.0\\.1|\\[::1\\]|0\\.0\\.0\\.0)\\S+"
+    message: >
+      Hardcoded URL detected. Skills that contact external services
+      may behave unexpectedly or leak data.
+    languages: [bash, python, ruby, javascript, typescript]
+    severity: INFO
+
+  - id: hardcoded-ip-address
+    patterns:
+      - pattern-regex: "\\b(?!127\\.0\\.0\\.1|0\\.0\\.0\\.0)(?:\\d{1,3}\\.){3}\\d{1,3}\\b"
+    message: >
+      Hardcoded IP address detected. Consider using hostnames or configuration.
+    languages: [bash, python, ruby, javascript, typescript]
+    severity: INFO

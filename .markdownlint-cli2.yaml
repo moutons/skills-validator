@@ -1,8 +1,17 @@
+gitignore: true
+
+globs:
+  - "**/*.md"
+
 ignores:
+  - "node_modules/"
+  - ".opencode/"
+  - "target/"
+  - "tests/fixtures/"
   - "docs/superpowers/plans/**"
   - "docs/specs/**"
   - "docs/plans/**"
-  - ".private-journal/**"
+  - ".private-journal/"
 
 config:
   # Disable line length limit

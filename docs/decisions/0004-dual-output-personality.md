@@ -4,7 +4,8 @@
 
 ## Context
 
-The validator produces diagnostics consumed by two very different audiences: humans learning to write better skills, and CI pipelines deciding whether to pass or fail. A single message format serves neither well — encouraging tone feels noisy in JSON; terse machine codes feel hostile to humans.
+The validator produces diagnostics consumed by two very different audiences: humans learning to write better skills, and CI pipelines deciding whether to pass or fail. A single message format serves neither well — encouraging tone feels noisy in
+JSON; terse machine codes feel hostile to humans.
 
 Two approaches were considered:
 
@@ -35,16 +36,21 @@ Each `Diagnostic` carries two messages: `human_message` (warm, encouraging, with
 
 ## Exit Code Semantics
 
-The exit code is computed by `pipeline::exit_code()` using the full unfiltered diagnostic set. If a user passes `--severity warning` to hide Info and Suggestion, the exit code still reflects any Errors present. This prevents CI from accidentally passing when errors are hidden by a severity filter.
+The exit code is computed by `pipeline::exit_code()` using the full unfiltered diagnostic set. If a user passes `--severity warning` to hide Info and Suggestion, the exit code still reflects any Errors present. This prevents CI from accidentally
+passing when errors are hidden by a severity filter.
 
 In `--strict` mode, Suggestion and Warning also produce exit code 1.
 
 ## Rationale
 
-- **Two messages over one**: A message like "Nice — your skill includes a gotchas section, which is one of the highest-value things you can add" is great for humans but useless in JSON. The machine equivalent is "Skill includes gotchas section with content." Trying to derive one from the other (stripping emoji, adding warmth) is fragile and produces mediocre results for both audiences.
-- **Parallel formatters over templates**: The two formatters share no logic except severity counting. Human output groups by severity; JSON output is a flat list. Human output uses human_message; JSON uses machine_message. Attempting to share code would create coupling without reducing complexity.
-- **Unfiltered exit codes**: A filtered view is a display preference, not a contract change. If errors exist, the process should exit 1 regardless of what the user chose to see. This matches the principle that `--severity` affects what you see, not what the validator finds.
+- **Two messages over one**: A message like "Nice — your skill includes a gotchas section, which is one of the highest-value things you can add" is great for humans but useless in JSON. The machine equivalent is "Skill includes gotchas section with
+  content." Trying to derive one from the other (stripping emoji, adding warmth) is fragile and produces mediocre results for both audiences.
+- **Parallel formatters over templates**: The two formatters share no logic except severity counting. Human output groups by severity; JSON output is a flat list. Human output uses human_message; JSON uses machine_message. Attempting to share code
+  would create coupling without reducing complexity.
+- **Unfiltered exit codes**: A filtered view is a display preference, not a contract change. If errors exist, the process should exit 1 regardless of what the user chose to see. This matches the principle that `--severity` affects what you see, not
+  what the validator finds.
 
 ## Alternatives Rejected
 
-**Single message with format hints**: Would require each diagnostic author to write one message that reads well both in a terminal with emoji and in a JSON array. In practice, messages optimized for humans are too verbose for JSON, and messages optimized for JSON feel terse and cold to humans. The dual-message approach lets each diagnostic nail both audiences independently.
+**Single message with format hints**: Would require each diagnostic author to write one message that reads well both in a terminal with emoji and in a JSON array. In practice, messages optimized for humans are too verbose for JSON, and messages
+optimized for JSON feel terse and cold to humans. The dual-message approach lets each diagnostic nail both audiences independently.

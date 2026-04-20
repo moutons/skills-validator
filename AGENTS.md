@@ -36,7 +36,8 @@ Architectural decisions are documented in `docs/decisions/`. Read these before p
 
 ## Git Hooks
 
-This project uses lefthook for pre-commit and pre-push hooks. **Hooks must always pass before committing or pushing — no exceptions.** If a hook reports failures, fix them even if the issues are pre-existing and unrelated to your changes. Never use `--no-verify` to bypass hooks.
+This project uses lefthook for pre-commit and pre-push hooks. **Hooks must always pass before committing or pushing — no exceptions.** If a hook reports failures, fix them even if the issues are pre-existing and unrelated to your changes. Never use
+`--no-verify` to bypass hooks.
 
 Deterministic checks are enforced via lefthook:
 

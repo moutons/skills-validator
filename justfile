@@ -37,7 +37,7 @@ security:
 # Lint markdown files
 markdown:
   pnpx prettier --write "**/*.md" --print-width 250
-  pnpx markdownlint-cli2 '**/*.md' '!node_modules/' '!.opencode/' '!tests/fixtures/'
+  pnpx markdownlint-cli2
 
 # Lint, validate, and pin GitHub workflows
 workflows:

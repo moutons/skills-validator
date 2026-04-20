@@ -1,11 +1,11 @@
 # Scan and Discovery System Design
 
-**Date:** 2026-04-05
-**Status:** Approved
+**Date:** 2026-04-05 **Status:** Approved
 
 ## Overview
 
-The scan and discovery system is the entry point for skills-validator. It resolves agent tool directories from an embedded configuration file, walks those directories to find `SKILL.md` files, validates each discovered skill through the pipeline, and reports results with appropriate exit codes. The design separates path resolution, discovery, and validation into distinct phases to keep each concern testable in isolation.
+The scan and discovery system is the entry point for skills-validator. It resolves agent tool directories from an embedded configuration file, walks those directories to find `SKILL.md` files, validates each discovered skill through the pipeline, and
+reports results with appropriate exit codes. The design separates path resolution, discovery, and validation into distinct phases to keep each concern testable in isolation.
 
 ## Architecture
 
@@ -41,18 +41,19 @@ The stripped output is fed to `serde_json::from_str`.
 
 `expand_path()` replaces four variables in directory templates:
 
-| Variable      | Source                          | Required context   |
-|---------------|---------------------------------|--------------------|
-| `$HOME`       | `dirs::home_dir()`              | Always available   |
-| `~`           | `dirs::home_dir()` (alias)      | Always available   |
-| `$REPO_ROOT`  | `find_repo_root()` from git mod | `repo_root` param  |
-| `$CWD`        | `std::env::current_dir()`       | Always available   |
+| Variable     | Source                          | Required context  |
+| ------------ | ------------------------------- | ----------------- |
+| `$HOME`      | `dirs::home_dir()`              | Always available  |
+| `~`          | `dirs::home_dir()` (alias)      | Always available  |
+| `$REPO_ROOT` | `find_repo_root()` from git mod | `repo_root` param |
+| `$CWD`       | `std::env::current_dir()`       | Always available  |
 
 If `$REPO_ROOT` is referenced but no repo root is provided, `expand_path` returns `Err(PathsError::RepoRootNotProvided)`.
 
 ### Tool Lookup
 
-Each tool entry is stored in a `HashMap<String, ToolConfig>` keyed by kebab-case name. `to_kebab_case()` normalizes `CamelCase`, `snake_case`, and `UPPER-KEBAB` inputs so that `get_tool()` is effectively case-insensitive. A `ToolConfig` contains `name` (display), `documentation` (optional URL), and `directories` (template strings).
+Each tool entry is stored in a `HashMap<String, ToolConfig>` keyed by kebab-case name. `to_kebab_case()` normalizes `CamelCase`, `snake_case`, and `UPPER-KEBAB` inputs so that `get_tool()` is effectively case-insensitive. A `ToolConfig` contains
+`name` (display), `documentation` (optional URL), and `directories` (template strings).
 
 ## Discovery Process
 
@@ -84,7 +85,8 @@ let has_errors = pipeline_result.diagnostics.iter()
 
 ### Legacy Compatibility
 
-Each `SkillValidation` carries both a `PipelineResult` (new) and a `ValidationResult` (legacy, `#[deprecated]`). The legacy struct is built by partitioning diagnostics into `errors` (Error severity) and `warnings` (Warning severity) string vectors. This preserves backward compatibility with output formatters that predate the pipeline.
+Each `SkillValidation` carries both a `PipelineResult` (new) and a `ValidationResult` (legacy, `#[deprecated]`). The legacy struct is built by partitioning diagnostics into `errors` (Error severity) and `warnings` (Warning severity) string vectors.
+This preserves backward compatibility with output formatters that predate the pipeline.
 
 ### Strict Mode
 
@@ -92,7 +94,8 @@ The `exit_code()` function in `pipeline.rs` supports a `strict` flag. In strict 
 
 ## Duplicate Detection
 
-`find_duplicates()` groups all `SkillValidation` entries by their directory's final path component (via `Path::file_name()`). Any group with more than one entry is returned as a duplicate set. This catches the same skill name appearing under both user-home and repo-root paths.
+`find_duplicates()` groups all `SkillValidation` entries by their directory's final path component (via `Path::file_name()`). Any group with more than one entry is returned as a duplicate set. This catches the same skill name appearing under both
+user-home and repo-root paths.
 
 ```rust
 let name = skill.skill.directory.file_name()
@@ -104,13 +107,13 @@ let name = skill.skill.directory.file_name()
 
 `ScanOptions` controls which directories are resolved:
 
-| Field   | Type         | Effect                                                        |
-|---------|--------------|---------------------------------------------------------------|
-| `all`   | `bool`       | Scan both `$HOME`-based and `$REPO_ROOT`-based directories    |
-| `user`  | `bool`       | Scan only directories containing `$HOME` or `~`               |
-| `repo`  | `bool`       | Scan only directories containing `$REPO_ROOT`                 |
-| `tools` | `Vec<String>`| Filter to specific tool names (applied on top of mode)        |
-| `verbose`| `bool`      | Reserved for verbose output (currently unused)                |
+| Field     | Type          | Effect                                                     |
+| --------- | ------------- | ---------------------------------------------------------- |
+| `all`     | `bool`        | Scan both `$HOME`-based and `$REPO_ROOT`-based directories |
+| `user`    | `bool`        | Scan only directories containing `$HOME` or `~`            |
+| `repo`    | `bool`        | Scan only directories containing `$REPO_ROOT`              |
+| `tools`   | `Vec<String>` | Filter to specific tool names (applied on top of mode)     |
+| `verbose` | `bool`        | Reserved for verbose output (currently unused)             |
 
 When `tools` is non-empty, only matching tool names are included regardless of mode. If `repo` or `all` is set, `find_repo_root(None)` is called to locate the git root.
 
@@ -118,20 +121,20 @@ Directory filtering happens at template level: `$HOME`/`~` templates are only ex
 
 ## Exit Codes
 
-| Code | Meaning                                                             |
-|------|---------------------------------------------------------------------|
-| `0`  | All discovered skills are valid                                     |
+| Code | Meaning                                                                                                              |
+| ---- | -------------------------------------------------------------------------------------------------------------------- |
+| `0`  | All discovered skills are valid                                                                                      |
 | `1`  | One or more skills have Error-severity diagnostics (or, in `--strict` mode, Warning/Suggestion-severity diagnostics) |
-| `2`  | Scan or configuration error (failed to load config, parse error)    |
+| `2`  | Scan or configuration error (failed to load config, parse error)                                                     |
 
 ## Key Types
 
-| Type              | Module        | Purpose                                      |
-|-------------------|---------------|----------------------------------------------|
-| `ScanOptions`     | `scan.rs`     | Controls scan mode and filtering              |
-| `ScanResult`      | `scan.rs`     | Aggregated scan output with counts            |
-| `SkillValidation` | `scan.rs`     | Single skill with both pipeline and legacy results |
-| `PathsConfig`     | `paths.rs`    | Parsed tool registry from `paths.jsonc`       |
-| `ToolConfig`      | `paths.rs`    | Single tool entry (name, docs URL, dirs)      |
-| `DiscoveredSkill` | `discovery.rs`| A found `SKILL.md` with its tool and path     |
-| `DiscoveryResult` | `discovery.rs`| All discovered skills plus skipped directories|
+| Type              | Module         | Purpose                                            |
+| ----------------- | -------------- | -------------------------------------------------- |
+| `ScanOptions`     | `scan.rs`      | Controls scan mode and filtering                   |
+| `ScanResult`      | `scan.rs`      | Aggregated scan output with counts                 |
+| `SkillValidation` | `scan.rs`      | Single skill with both pipeline and legacy results |
+| `PathsConfig`     | `paths.rs`     | Parsed tool registry from `paths.jsonc`            |
+| `ToolConfig`      | `paths.rs`     | Single tool entry (name, docs URL, dirs)           |
+| `DiscoveredSkill` | `discovery.rs` | A found `SKILL.md` with its tool and path          |
+| `DiscoveryResult` | `discovery.rs` | All discovered skills plus skipped directories     |

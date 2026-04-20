@@ -58,10 +58,6 @@ jobs:
 
       - name: Run markdownlint
         uses: DavidAnson/markdownlint-cli2-action@ce4853d43830c74c1753b39f3cf40f71c2031eb9 # v23.0.0
-        with:
-          globs: |
-            **/*.md
-            !tests/fixtures/**
 
   clippy:
     name: Clippy

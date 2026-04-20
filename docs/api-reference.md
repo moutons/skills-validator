@@ -4,9 +4,7 @@ This document covers the v0.2.0 public API surface of `skills-validator`.
 
 ## Pipeline API
 
-The pipeline API is the primary entry point for validation. It runs all five
-passes (Parse, Structure, Content, References, Security) in sequence and
-returns a structured result.
+The pipeline API is the primary entry point for validation. It runs all five passes (Parse, Structure, Content, References, Security) in sequence and returns a structured result.
 
 ### `run_pipeline`
 
@@ -114,11 +112,9 @@ pub enum Severity {
 }
 ```
 
-Severity levels in ascending order. `Severity` implements `PartialOrd`, so
-`Info < Suggestion < Warning < Error`.
+Severity levels in ascending order. `Severity` implements `PartialOrd`, so `Info < Suggestion < Warning < Error`.
 
-`Severity` also implements `FromStr` (accepts `"info"`, `"suggestion"`,
-`"warning"`, `"error"`) and `Display`.
+`Severity` also implements `FromStr` (accepts `"info"`, `"suggestion"`, `"warning"`, `"error"`) and `Display`.
 
 ---
 
@@ -135,23 +131,21 @@ pub enum Sizeyness {
 }
 ```
 
-Complexity tier for a skill. Determined by file count, subdirectory count,
-and presence of orchestration frontmatter fields (`hooks`, `agent`, `context`).
+Complexity tier for a skill. Determined by file count, subdirectory count, and presence of orchestration frontmatter fields (`hooks`, `agent`, `context`).
 
 **Thresholds (defaults):**
 
-| Tier     | Condition                                                  |
-| -------- | ---------------------------------------------------------- |
-| Simple   | < 3 files, 0 subdirectories, no orchestration fields       |
-| Moderate | >= 3 files or >= 1 subdirectory                            |
+| Tier     | Condition                                                    |
+| -------- | ------------------------------------------------------------ |
+| Simple   | < 3 files, 0 subdirectories, no orchestration fields         |
+| Moderate | >= 3 files or >= 1 subdirectory                              |
 | Hefty    | >= 6 files, >= 3 subdirectories, or has orchestration fields |
 
 ---
 
 ### `ValidatorConfig`
 
-Top-level configuration struct. All fields have sane defaults and can be
-overridden via config file, environment variables, or by constructing manually.
+Top-level configuration struct. All fields have sane defaults and can be overridden via config file, environment variables, or by constructing manually.
 
 ```rust
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
@@ -167,34 +161,34 @@ pub struct ValidatorConfig {
 
 `SizeynessConfig`:
 
-| Field                      | Default |
-| -------------------------- | ------- |
-| `moderate_file_threshold`  | `3`     |
-| `hefty_file_threshold`     | `6`     |
-| `moderate_subdir_threshold`| `1`     |
-| `hefty_subdir_threshold`   | `3`     |
+| Field                       | Default |
+| --------------------------- | ------- |
+| `moderate_file_threshold`   | `3`     |
+| `hefty_file_threshold`      | `6`     |
+| `moderate_subdir_threshold` | `1`     |
+| `hefty_subdir_threshold`    | `3`     |
 
 `ContentConfig`:
 
-| Field             | Default                                                          |
-| ----------------- | ---------------------------------------------------------------- |
-| `body_line_limit` | `300`                                                            |
+| Field             | Default                                                                 |
+| ----------------- | ----------------------------------------------------------------------- |
+| `body_line_limit` | `300`                                                                   |
 | `known_models`    | `["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5-20251001"]` |
 
 `ReferencesConfig`:
 
-| Field                 | Default                                                        |
-| --------------------- | -------------------------------------------------------------- |
-| `markdown_hop_limit`  | `5`                                                            |
-| `orphan_exclusions`   | `["LICENSE*", "CHANGELOG*", "README*", ".gitignore", ".*"]`   |
+| Field                | Default                                                     |
+| -------------------- | ----------------------------------------------------------- |
+| `markdown_hop_limit` | `5`                                                         |
+| `orphan_exclusions`  | `["LICENSE*", "CHANGELOG*", "README*", ".gitignore", ".*"]` |
 
 `SecurityConfig`:
 
-| Field                | Default    |
-| -------------------- | ---------- |
-| `semgrep_enabled`    | `true`     |
-| `semgrep_path`       | `"semgrep"`|
-| `custom_rules_dir`   | `""`       |
+| Field              | Default     |
+| ------------------ | ----------- |
+| `semgrep_enabled`  | `true`      |
+| `semgrep_path`     | `"semgrep"` |
+| `custom_rules_dir` | `""`        |
 
 **Config loading:**
 
@@ -208,9 +202,7 @@ pub fn load_from_str(toml_str: &str) -> (ValidatorConfig, Vec<Diagnostic>)
 
 **Config file location:** `$XDG_CONFIG_HOME/skills-validator/config.toml`
 
-**Environment variable overrides** use the pattern
-`SKILLS_VALIDATOR_<SECTION>_<KEY>` (uppercase). For example:
-`SKILLS_VALIDATOR_CONTENT_BODY_LINE_LIMIT=500`.
+**Environment variable overrides** use the pattern `SKILLS_VALIDATOR_<SECTION>_<KEY>` (uppercase). For example: `SKILLS_VALIDATOR_CONTENT_BODY_LINE_LIMIT=500`.
 
 ---
 
@@ -230,8 +222,7 @@ pub fn format_human(result: &PipelineResult, skill_dir: &Path, min_severity: Sev
 - `skill_dir` - Used to derive the skill label if `skill_name` is absent
 - `min_severity` - Diagnostics below this severity are filtered out
 
-**Output:** Grouped by severity (Info, Suggestion, Warning, Error) with a
-summary line. Falls back to the directory name when `skill_name` is `None`.
+**Output:** Grouped by severity (Info, Suggestion, Warning, Error) with a summary line. Falls back to the directory name when `skill_name` is `None`.
 
 ---
 
@@ -283,6 +274,7 @@ pub fn format_json(
 ```
 
 Notes:
+
 - `diagnostics[].message` uses `machine_message`, not `human_message`
 - `diagnostics[].file` is relative to `skill_dir`, omitted if absent
 - `exit_code` is computed from all diagnostics (unfiltered by `min_severity`)
@@ -291,7 +283,7 @@ Notes:
 
 ## Scan API
 
-### `scan`
+### `scan` (library)
 
 Scan one or more tool directories for skills and validate each one.
 
@@ -382,8 +374,7 @@ Find skills with the same directory name appearing in more than one location.
 pub fn find_duplicates(result: &ScanResult) -> Vec<Vec<&SkillValidation>>
 ```
 
-Returns a list of groups; each group contains two or more `SkillValidation`
-references sharing the same directory name.
+Returns a list of groups; each group contains two or more `SkillValidation` references sharing the same directory name.
 
 ---
 
@@ -399,8 +390,7 @@ pub fn discover_skills(directories: &[(String, PathBuf)]) -> DiscoveryResult
 
 - `directories` - Slice of `(tool_name, expanded_path)` tuples
 
-Walks each directory recursively. Directories that do not exist are recorded
-in `DiscoveryResult::skipped_dirs` rather than returning an error.
+Walks each directory recursively. Directories that do not exist are recorded in `DiscoveryResult::skipped_dirs` rather than returning an error.
 
 ---
 
@@ -448,9 +438,7 @@ pub fn find_skill_md(skill_dir: &Path) -> Option<PathBuf>
 - `Some(PathBuf)` - Path to the `SKILL.md` file
 - `None` - No file named exactly `SKILL.md` exists
 
-**Important:** This function enforces exact `SKILL.md` casing. On
-case-insensitive filesystems (macOS), it verifies the casing by reading the
-directory listing. It does **not** fall back to `skill.md` or other casings.
+**Important:** This function enforces exact `SKILL.md` casing. On case-insensitive filesystems (macOS), it verifies the casing by reading the directory listing. It does **not** fall back to `skill.md` or other casings.
 
 ---
 
@@ -587,19 +575,18 @@ pub fn expand_path(template: &str, repo_root: Option<&PathBuf>) -> Result<PathBu
 
 **Supported variables:**
 
-| Variable      | Expands to                        |
-| ------------- | --------------------------------- |
-| `~`           | User home directory               |
-| `$HOME`       | User home directory               |
-| `$REPO_ROOT`  | Git repository root (if provided) |
-| `$CWD`        | Current working directory         |
+| Variable     | Expands to                        |
+| ------------ | --------------------------------- |
+| `~`          | User home directory               |
+| `$HOME`      | User home directory               |
+| `$REPO_ROOT` | Git repository root (if provided) |
+| `$CWD`       | Current working directory         |
 
 ---
 
 ### `PathsConfig`
 
-Configuration containing tool directory templates, loaded from the embedded
-`paths.jsonc`.
+Configuration containing tool directory templates, loaded from the embedded `paths.jsonc`.
 
 ```rust
 pub struct PathsConfig {
@@ -614,8 +601,7 @@ impl PathsConfig {
 }
 ```
 
-Tool names are normalized to kebab-case. `get_tool` and `has_tool` accept
-any casing.
+Tool names are normalized to kebab-case. `get_tool` and `has_tool` accept any casing.
 
 ---
 
@@ -642,9 +628,7 @@ pub enum PathsError {
 
 ## Legacy API
 
-The following items are **deprecated** as of v0.2.0. They remain for backward
-compatibility but will be removed in a future release. Use the Pipeline API
-instead.
+The following items are **deprecated** as of v0.2.0. They remain for backward compatibility but will be removed in a future release. Use the Pipeline API instead.
 
 ### `validate` (deprecated)
 
@@ -676,13 +660,13 @@ Use `PipelineResult` and `Diagnostic` instead.
 
 ### Global Options
 
-| Option             | Short | Description                                               |
-| ------------------ | ----- | --------------------------------------------------------- |
-| `--log-level`      | `-l`  | Set log level: `error`, `warn`, `info`, `debug` (default: `info`) |
-| `--output-format`  |       | Output format for `validate`: `human` (default) or `json` |
-| `--severity`       |       | Minimum severity to display: `info` (default), `suggestion`, `warning`, `error` |
-| `--strict`         |       | Promote warnings and suggestions to exit code 1           |
-| `--json`           |       | **Deprecated.** Alias for `--output-format json`. Previously wrote JSON log lines to stderr; now writes structured JSON to stdout. |
+| Option            | Short | Description                                                                                                                        |
+| ----------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `--log-level`     | `-l`  | Set log level: `error`, `warn`, `info`, `debug` (default: `info`)                                                                  |
+| `--output-format` |       | Output format for `validate`: `human` (default) or `json`                                                                          |
+| `--severity`      |       | Minimum severity to display: `info` (default), `suggestion`, `warning`, `error`                                                    |
+| `--strict`        |       | Promote warnings and suggestions to exit code 1                                                                                    |
+| `--json`          |       | **Deprecated.** Alias for `--output-format json`. Previously wrote JSON log lines to stderr; now writes structured JSON to stdout. |
 
 ---
 
@@ -727,7 +711,7 @@ skills-validator --severity warning validate ~/.claude/skills/my-skill
 
 ---
 
-### `scan`
+### `scan` (CLI)
 
 Scan for skills across multiple tool directories.
 
@@ -745,11 +729,11 @@ skills-validator scan [--all | --user | --repo] [--tool <NAMES>] [--dry-run] [--
 
 **Other flags:**
 
-| Flag          | Description                                     |
-| ------------- | ----------------------------------------------- |
-| `--tool <NAMES>` | Comma-separated tool names to scan           |
-| `--dry-run`   | Print what would be scanned without validating  |
-| `--verbose`   | Show detailed output per skill                  |
+| Flag             | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `--tool <NAMES>` | Comma-separated tool names to scan             |
+| `--dry-run`      | Print what would be scanned without validating |
+| `--verbose`      | Show detailed output per skill                 |
 
 **Exit codes:**
 
@@ -821,10 +805,10 @@ skills-validator completions <SHELL>
 
 ### Output Streams
 
-| Stream | Content                                          |
-| ------ | ------------------------------------------------ |
-| stdout | Data/results (validation output, YAML, XML, JSON)|
-| stderr | Log messages (INFO, WARN, DEBUG, errors)         |
+| Stream | Content                                           |
+| ------ | ------------------------------------------------- |
+| stdout | Data/results (validation output, YAML, XML, JSON) |
+| stderr | Log messages (INFO, WARN, DEBUG, errors)          |
 
 ---
 

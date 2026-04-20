@@ -67,14 +67,14 @@ skills-validator completions fish
 
 ### CLI Flags
 
-| Flag | Description |
-| ---- | ----------- |
-| `--strict` | Exit 1 on warnings or suggestions (not just errors) |
-| `--output-format human\|json` | Output format (default: `human`) |
-| `--severity info\|suggestion\|warning\|error` | Only show diagnostics at or above this severity |
-| `--json` | **Deprecated.** Alias for `--output-format json`; emits a deprecation warning |
-| `--verbose` | Show detailed output |
-| `--dry-run` | Discover skills without validating (scan subcommand) |
+| Flag                                          | Description                                                                   |
+| --------------------------------------------- | ----------------------------------------------------------------------------- |
+| `--strict`                                    | Exit 1 on warnings or suggestions (not just errors)                           |
+| `--output-format human\|json`                 | Output format (default: `human`)                                              |
+| `--severity info\|suggestion\|warning\|error` | Only show diagnostics at or above this severity                               |
+| `--json`                                      | **Deprecated.** Alias for `--output-format json`; emits a deprecation warning |
+| `--verbose`                                   | Show detailed output                                                          |
+| `--dry-run`                                   | Discover skills without validating (scan subcommand)                          |
 
 ### Rust API
 
@@ -104,41 +104,42 @@ fn main() {
 
 Validation runs as a five-pass pipeline. Each pass can emit diagnostics at any severity level.
 
-| Pass | Name | What it checks |
-| ---- | ---- | -------------- |
-| 1 | **Parse** | YAML frontmatter parsing via pulldown-cmark AST |
-| 2 | **Structure** | File inventory, sizeyness classification, binary file detection |
-| 3 | **Content** | Frontmatter field validation, body quality, positive reinforcement |
-| 4 | **References** | Markdown link chain walking (up to 5 hops), orphan file detection |
-| 5 | **Security** | Remote execution patterns, optional semgrep integration |
+| Pass | Name           | What it checks                                                     |
+| ---- | -------------- | ------------------------------------------------------------------ |
+| 1    | **Parse**      | YAML frontmatter parsing via pulldown-cmark AST                    |
+| 2    | **Structure**  | File inventory, sizeyness classification, binary file detection    |
+| 3    | **Content**    | Frontmatter field validation, body quality, positive reinforcement |
+| 4    | **References** | Markdown link chain walking (up to 5 hops), orphan file detection  |
+| 5    | **Security**   | Remote execution patterns, optional semgrep integration            |
 
 ### Diagnostic Severity Tiers
 
 Diagnostics use a four-tier severity model:
 
-| Tier | Purpose | Exit code |
-| ---- | ------- | --------- |
-| **Info** | Positive reinforcement for good practices | 0 |
-| **Suggestion** | Gentle nudge to consider adding something | 0 (1 with `--strict`) |
-| **Warning** | Real quality concern affecting agent behavior | 0 (1 with `--strict`) |
-| **Error** | Broken, spec-violating, or dangerous | 1 always |
+| Tier           | Purpose                                       | Exit code             |
+| -------------- | --------------------------------------------- | --------------------- |
+| **Info**       | Positive reinforcement for good practices     | 0                     |
+| **Suggestion** | Gentle nudge to consider adding something     | 0 (1 with `--strict`) |
+| **Warning**    | Real quality concern affecting agent behavior | 0 (1 with `--strict`) |
+| **Error**      | Broken, spec-violating, or dangerous          | 1 always              |
 
 ### Sizeyness Escalation
 
-Skills are classified by sizeyness (Simple, Moderate, Hefty) based on file count, total size, and body length. A check that produces a **suggestion** for a simple skill may escalate to a **warning** or **error** for a moderate or hefty one. This means larger, more complex skills are held to a higher standard.
+Skills are classified by sizeyness (Simple, Moderate, Hefty) based on file count, total size, and body length. A check that produces a **suggestion** for a simple skill may escalate to a **warning** or **error** for a moderate or hefty one. This
+means larger, more complex skills are held to a higher standard.
 
 ### Frontmatter Validation
 
 Validates against the [Agent Skills specification](https://agentskills.io/specification):
 
-| Field | Required | Constraints |
-| ----- | -------- | ----------- |
-| `name` | Yes | Max 64 characters. Lowercase letters, numbers, and hyphens only. Must not start or end with a hyphen. Must not contain consecutive hyphens (`--`). Must match directory name. |
-| `description` | Yes | Max 250 characters. Non-empty. |
-| `license` | No | License name or reference to a bundled license file. |
-| `compatibility` | No | Max 500 characters. Indicates environment requirements. |
-| `metadata` | No | Arbitrary key-value mapping for additional metadata. |
-| `allowed-tools` | No | Space-delimited list of pre-approved tools. (Experimental) |
+| Field           | Required | Constraints                                                                                                                                                                   |
+| --------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`          | Yes      | Max 64 characters. Lowercase letters, numbers, and hyphens only. Must not start or end with a hyphen. Must not contain consecutive hyphens (`--`). Must match directory name. |
+| `description`   | Yes      | Max 250 characters. Non-empty.                                                                                                                                                |
+| `license`       | No       | License name or reference to a bundled license file.                                                                                                                          |
+| `compatibility` | No       | Max 500 characters. Indicates environment requirements.                                                                                                                       |
+| `metadata`      | No       | Arbitrary key-value mapping for additional metadata.                                                                                                                          |
+| `allowed-tools` | No       | Space-delimited list of pre-approved tools. (Experimental)                                                                                                                    |
 
 **Unknown fields** produce warnings (demoted from errors in 0.2.0).
 
@@ -146,12 +147,12 @@ Validates against the [Agent Skills specification](https://agentskills.io/specif
 
 Warns when skill content is missing key directive words:
 
-| Keyword | Guidance |
-| ------- | -------- |
-| `never` | A well-written skill includes clear directives to NEVER do something and preferably ALWAYS do an alternative. See <https://agentskills.io/what-are-skills> |
-| `always` | A well-written skill includes clear directives to ALWAYS do something in certain circumstances. See <https://agentskills.io/what-are-skills> |
-| `when` | A well-written skill contains 'when' statements to inform the agent of what conditions trigger certain behaviors. See <https://code.claude.com/docs/en/skills> |
-| `example` | A well-written skill contains examples to inform the agent of what to do in commonly encountered circumstances. See <https://opencode.ai/docs/skills> |
+| Keyword   | Guidance                                                                                                                                                       |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `never`   | A well-written skill includes clear directives to NEVER do something and preferably ALWAYS do an alternative. See <https://agentskills.io/what-are-skills>     |
+| `always`  | A well-written skill includes clear directives to ALWAYS do something in certain circumstances. See <https://agentskills.io/what-are-skills>                   |
+| `when`    | A well-written skill contains 'when' statements to inform the agent of what conditions trigger certain behaviors. See <https://code.claude.com/docs/en/skills> |
+| `example` | A well-written skill contains examples to inform the agent of what to do in commonly encountered circumstances. See <https://opencode.ai/docs/skills>          |
 
 ### Claude Code Extensions
 
@@ -234,7 +235,7 @@ The `scan` command discovers and validates skills across multiple agent tool dir
 - `--verbose`: Show detailed output for each skill
 - `--output-format json`: Output results as JSON
 
-### Configuration
+### Scan Path Configuration
 
 Tool paths are configured in `paths.jsonc` which is embedded at compile time. The tool directory templates support:
 

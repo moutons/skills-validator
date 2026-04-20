@@ -306,9 +306,9 @@ pub fn check_my_rule(props: &SkillProperties) -> Vec<Diagnostic> {
 }
 ```
 
-3. **Integrate into the pass** - Call your check from the main pass function and collect diagnostics
+1. **Integrate into the pass** - Call your check from the main pass function and collect diagnostics
 
-4. **Add tests** in the corresponding test file (e.g., `tests/passes_content.rs`):
+1. **Add tests** in the corresponding test file (e.g., `tests/passes_content.rs`):
 
 ```rust
 #[test]
@@ -317,7 +317,7 @@ fn test_my_rule() {
 }
 ```
 
-5. **Document** in `docs/validation-rules.md`
+1. **Document** in `docs/validation-rules.md`
 
 ### Adding a New Field
 

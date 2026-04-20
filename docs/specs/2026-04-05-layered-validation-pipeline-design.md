@@ -1,12 +1,11 @@
 # Layered Validation Pipeline Design
 
-**Date:** 2026-04-05
-**Status:** Approved
-**Decision:** [0001-layered-analysis-pipeline](../decisions/0001-layered-analysis-pipeline.md)
+**Date:** 2026-04-05 **Status:** Approved **Decision:** [0001-layered-analysis-pipeline](../decisions/0001-layered-analysis-pipeline.md)
 
 ## Overview
 
-Restructure the skills-validator from a single-pass checker with ~6 basic checks into a five-pass analysis pipeline with ~30 checks spanning content quality, structural integrity, referential integrity, and optional security analysis. The pipeline introduces sizeyness-aware severity escalation, a four-tier diagnostic model, and configurable thresholds — all without breaking the workflow for simple single-file skills.
+Restructure the skills-validator from a single-pass checker with ~6 basic checks into a five-pass analysis pipeline with ~30 checks spanning content quality, structural integrity, referential integrity, and optional security analysis. The pipeline
+introduces sizeyness-aware severity escalation, a four-tier diagnostic model, and configurable thresholds — all without breaking the workflow for simple single-file skills.
 
 ### Goals
 
@@ -21,7 +20,7 @@ Restructure the skills-validator from a single-pass checker with ~6 basic checks
 
 - Replacing semgrep or building a full SAST tool
 - Enforcing rules for tools we don't actively track
-- Evaluating whether skill *content* is actually good advice
+- Evaluating whether skill _content_ is actually good advice
 
 ## Data Model
 
@@ -29,11 +28,11 @@ Restructure the skills-validator from a single-pass checker with ~6 basic checks
 
 Skills are classified into three sizeyness tiers based on their directory structure and frontmatter:
 
-| Tier | Triggers (any one) |
-|------|-------------------|
-| **Simple** | 1-2 files, no subdirectories, no orchestration fields |
-| **Moderate** | 3-5 files OR 1-2 subdirectories |
-| **Hefty** | 6+ files OR 3+ subdirectories OR orchestration frontmatter (`hooks`, `agent`, `context`) |
+| Tier         | Triggers (any one)                                                                       |
+| ------------ | ---------------------------------------------------------------------------------------- |
+| **Simple**   | 1-2 files, no subdirectories, no orchestration fields                                    |
+| **Moderate** | 3-5 files OR 1-2 subdirectories                                                          |
+| **Hefty**    | 6+ files OR 3+ subdirectories OR orchestration frontmatter (`hooks`, `agent`, `context`) |
 
 A skill is classified at the **highest tier** for which any single criterion is met. File count and subdirectory count are evaluated independently; orchestration fields are evaluated independently; the maximum tier wins.
 
@@ -43,12 +42,12 @@ Thresholds are configurable (see [Configuration](#configuration)).
 
 Four tiers replace the current two-tier (warning/error) model:
 
-| Tier | Purpose | Exit code |
-|------|---------|-----------|
-| **Info** | Positive reinforcement — "you have this and it's valuable" | 0 |
-| **Suggestion** | Gentle nudge — "consider adding X" | 0 (1 with `--strict`) |
-| **Warning** | Absence measurably degrades agent behavior | 0 (1 with `--strict`) |
-| **Error** | Broken, spec-violating, or dangerous | 1 always |
+| Tier           | Purpose                                                    | Exit code             |
+| -------------- | ---------------------------------------------------------- | --------------------- |
+| **Info**       | Positive reinforcement — "you have this and it's valuable" | 0                     |
+| **Suggestion** | Gentle nudge — "consider adding X"                         | 0 (1 with `--strict`) |
+| **Warning**    | Absence measurably degrades agent behavior                 | 0 (1 with `--strict`) |
+| **Error**      | Broken, spec-violating, or dangerous                       | 1 always              |
 
 Severity escalates with sizeyness. A check with base severity `suggestion` may become `warning` for moderate skills and `error` for hefty skills.
 
@@ -72,7 +71,8 @@ Every check produces `Vec<Diagnostic>`. The formatter chooses `human_message` or
 
 ### Skill Context
 
-Accumulated state flowing through the pipeline. Each pass returns `Result<Vec<Diagnostic>, PipelineError>`. If a pass returns `PipelineError`, the pipeline emits a system-level diagnostic and stops (or continues to the next independent pass, depending on the error).
+Accumulated state flowing through the pipeline. Each pass returns `Result<Vec<Diagnostic>, PipelineError>`. If a pass returns `PipelineError`, the pipeline emits a system-level diagnostic and stops (or continues to the next independent pass,
+depending on the error).
 
 ```rust
 struct SkillContext {
@@ -102,7 +102,8 @@ enum PipelineError {
 }
 ```
 
-`PipelineError` is distinct from `Diagnostic` — it represents infrastructure failures ("the validator broke"), not skill quality issues ("your skill has a problem"). When a `PipelineError` occurs, it is converted to a system-level `Diagnostic` with severity `Error` and a check name of `pipeline-error`.
+`PipelineError` is distinct from `Diagnostic` — it represents infrastructure failures ("the validator broke"), not skill quality issues ("your skill has a problem"). When a `PipelineError` occurs, it is converted to a system-level `Diagnostic` with
+severity `Error` and a check name of `pipeline-error`.
 
 ### Exit Code Logic
 
@@ -118,20 +119,19 @@ fn exit_code(diagnostics: &[Diagnostic], strict: bool) -> i32 {
 
 Five passes, each building on the previous:
 
-| Pass | Name | Inputs | Outputs |
-|------|------|--------|---------|
-| 1 | **Parse** | Raw SKILL.md | `pulldown-cmark` AST, frontmatter fields |
-| 2 | **Structure** | Skill directory | File inventory, sizeyness tier, subdirectory map, binary detection |
-| 3 | **Content** | AST + sizeyness tier | Heading analysis, keyword checks, description quality, content diagnostics |
-| 4 | **References** | AST + file inventory + sizeyness tier | Reference chain validation, orphan detection, extension field validation |
-| 5 | **Security** (optional) | File inventory + detected scripts | Semgrep analysis if available, otherwise advisory warnings |
+| Pass | Name                    | Inputs                                | Outputs                                                                    |
+| ---- | ----------------------- | ------------------------------------- | -------------------------------------------------------------------------- |
+| 1    | **Parse**               | Raw SKILL.md                          | `pulldown-cmark` AST, frontmatter fields                                   |
+| 2    | **Structure**           | Skill directory                       | File inventory, sizeyness tier, subdirectory map, binary detection         |
+| 3    | **Content**             | AST + sizeyness tier                  | Heading analysis, keyword checks, description quality, content diagnostics |
+| 4    | **References**          | AST + file inventory + sizeyness tier | Reference chain validation, orphan detection, extension field validation   |
+| 5    | **Security** (optional) | File inventory + detected scripts     | Semgrep analysis if available, otherwise advisory warnings                 |
 
 If pass 1 fails (parse errors), the pipeline stops — no point running downstream passes.
 
 ## Pass 1: Parse
 
-**Inputs:** Path to skill directory
-**Outputs:** Frontmatter struct, markdown AST, prose-only body text
+**Inputs:** Path to skill directory **Outputs:** Frontmatter struct, markdown AST, prose-only body text
 
 ### Behavior
 
@@ -143,22 +143,21 @@ If pass 1 fails (parse errors), the pipeline stops — no point running downstre
 
 ### Diagnostics
 
-| Check | Severity | Escalates? |
-|-------|----------|------------|
-| `skill-file-exists` | Error | No |
-| `skill-file-casing` | Error | No — must be exactly `SKILL.md` |
-| `frontmatter-present` | Error | No |
-| `frontmatter-valid-yaml` | Error | No |
-| `frontmatter-is-mapping` | Error | No |
+| Check                    | Severity | Escalates?                      |
+| ------------------------ | -------- | ------------------------------- |
+| `skill-file-exists`      | Error    | No                              |
+| `skill-file-casing`      | Error    | No — must be exactly `SKILL.md` |
+| `frontmatter-present`    | Error    | No                              |
+| `frontmatter-valid-yaml` | Error    | No                              |
+| `frontmatter-is-mapping` | Error    | No                              |
 
 All parse diagnostics are errors regardless of sizeyness — parse failures are always fatal.
 
 ## Pass 2: Structure
 
-**Inputs:** Skill directory path, parsed frontmatter
-**Outputs:** Sizeyness tier, file inventory, subdirectory map
+**Inputs:** Skill directory path, parsed frontmatter **Outputs:** Sizeyness tier, file inventory, subdirectory map
 
-### Behavior
+### Pass 2 Behavior
 
 1. Walk the skill directory tree, cataloging every file.
 2. Classify each file:
@@ -170,68 +169,68 @@ All parse diagnostics are errors regardless of sizeyness — parse failures are 
 3. Record subdirectories.
 4. Compute sizeyness tier from thresholds.
 
-### Diagnostics
+### Pass 2 Diagnostics
 
-| Check | Base severity | Escalates? | Details |
-|-------|--------------|------------|---------|
-| `binary-detected` | Error | All tiers: error | "Binary file detected: `{path}`. Compiled binaries in skills are a security concern and shouldn't be distributed this way." |
-| `scripts-in-root` | Suggestion | Simple: suggestion, Moderate+: warning | "Scripts found in skill root — consider organizing into `scripts/`" |
-| `sizeyness-info` | Info | All tiers: info | "Skill classified as {tier} ({reasons})" |
+| Check             | Base severity | Escalates?                             | Details                                                                    |
+| ----------------- | ------------- | -------------------------------------- | -------------------------------------------------------------------------- |
+| `binary-detected` | Error         | All tiers: error                       | Binary file detected — security concern                                    |
+| `scripts-in-root` | Suggestion    | Simple: suggestion, Moderate+: warning | Scripts in root, consider organizing into `scripts/`                       |
+| `sizeyness-info`  | Info          | All tiers: info                        | Skill classified as {tier} ({reasons})                                     |
 
 ## Pass 3: Content
 
-**Inputs:** Markdown AST (prose-only view), frontmatter, sizeyness tier
-**Outputs:** Content quality diagnostics
+**Inputs:** Markdown AST (prose-only view), frontmatter, sizeyness tier **Outputs:** Content quality diagnostics
 
 ### Frontmatter checks
 
-| Check | Base severity | Escalates? | Details |
-|-------|--------------|------------|---------|
-| `name-missing` | Error | No | Required field |
-| `name-format` | Error | No | Lowercase, hyphens, 1-64 chars |
-| `name-directory-match` | Error | No | Must match directory name |
-| `description-missing` | Error | No | Required field |
-| `description-length` | Error | No | >250 chars. Link to Claude Code docs on truncation. |
-| `description-trigger-language` | Suggestion | Simple: suggestion, Moderate: warning, Hefty: error | Description should contain "use when", "trigger when", etc. |
-| `unknown-field` | Warning | No | Field not in spec or known extensions. Docs pointer to spec field list. |
-| `extension-field-compatibility` | Suggestion | No | "Field `{name}` is recognized by Claude Code but may not be used by other tools." |
+| Check                           | Base severity | Escalates?                                          | Details                                                                           |
+| ------------------------------- | ------------- | --------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `name-missing`                  | Error         | No                                                  | Required field                                                                    |
+| `name-format`                   | Error         | No                                                  | Lowercase, hyphens, 1-64 chars                                                    |
+| `name-directory-match`          | Error         | No                                                  | Must match directory name                                                         |
+| `description-missing`           | Error         | No                                                  | Required field                                                                    |
+| `description-length`            | Error         | No                                                  | >250 chars. Link to Claude Code docs on truncation.                               |
+| `description-trigger-language`  | Suggestion    | Simple: suggestion, Moderate: warning, Hefty: error | Description should contain "use when", "trigger when", etc.                       |
+| `unknown-field`                 | Warning       | No                                                  | Field not in spec or known extensions. Docs pointer to spec field list.           |
+| `extension-field-compatibility` | Suggestion    | No                                                  | "Field `{name}` is recognized by Claude Code but may not be used by other tools." |
 
 ### Extension field validation
 
-| Check | Severity | Details |
-|-------|----------|---------|
-| `context-valid-value` | Error | If `context` is set, must be `fork` (only documented value per Claude Code docs) |
-| `agent-with-context` | Warning | `agent` without `context: fork` has no effect |
-| `model-recognized` | Suggestion | Check against a bundled list of known Claude model identifiers (e.g., `claude-opus-4-6`, `claude-sonnet-4-6`, `claude-haiku-4-5-20251001`). List is configurable via `[content] known_models` in config. Unknown values get a suggestion, not an error — new models ship faster than validator releases. |
+| Check                 | Severity   | Details                                                                      |
+| --------------------- | ---------- | ---------------------------------------------------------------------------- |
+| `context-valid-value` | Error      | If set, `context` must be `fork` (only documented value)                     |
+| `agent-with-context`  | Warning    | `agent` without `context: fork` has no effect                                |
+| `model-recognized`    | Suggestion | Check against bundled list. Unknown models get suggestion. Configurable.     |
 
 ### Content quality checks (prose-only AST)
 
-| Check | Base severity | Escalates? | Details |
-|-------|--------------|------------|---------|
-| `has-trigger-conditions` | Suggestion | Simple: suggestion, Moderate: warning, Hefty: error | Word-boundary match for "use when", "trigger when", "activate when", or heading containing "when to use" |
-| `has-examples` | Suggestion | Simple: suggestion, Moderate: warning, Hefty: warning | Fenced code blocks OR heading containing "example" |
-| `has-behavioral-constraints` | Suggestion | Simple: suggestion, Moderate: warning, Hefty: warning | Word-boundary `\bnever\b` and `\balways\b` |
-| `has-gotchas` | Suggestion | Simple: suggestion, Moderate: suggestion, Hefty: warning | Heading containing "gotcha", "caveat", "pitfall", or "common mistake". Link to agentskills.io best practices. |
-| `body-length` | Suggestion | Simple: suggestion, Moderate: warning, Hefty: error | >300 lines (configurable). Link to progressive disclosure docs. |
-| `windows-paths` | Suggestion | No | Existing check, AST-aware (prose only, not code blocks — a Windows path in a code example is likely intentional) |
+| Check                        | Base severity | Escalates?                                               | Details                                                                                                          |
+| ---------------------------- | ------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `has-trigger-conditions`     | Suggestion    | Simple: suggestion, Moderate: warning, Hefty: error      | Word-boundary match for "use when", "trigger when", "activate when", or heading containing "when to use"         |
+| `has-examples`               | Suggestion    | Simple: suggestion, Moderate: warning, Hefty: warning    | Fenced code blocks OR heading containing "example"                                                               |
+| `has-behavioral-constraints` | Suggestion    | Simple: suggestion, Moderate: warning, Hefty: warning    | Word-boundary `\bnever\b` and `\balways\b`                                                                       |
+| `has-gotchas`                | Suggestion    | Simple: suggestion, Moderate: suggestion, Hefty: warning | Heading containing "gotcha", "caveat", "pitfall", or "common mistake". Link to agentskills.io best practices.    |
+| `body-length`                | Suggestion    | Simple: suggestion, Moderate: warning, Hefty: error      | >300 lines (configurable). Link to progressive disclosure docs.                                                  |
+| `windows-paths`              | Suggestion    | No                                                       | Existing check, AST-aware (prose only, not code blocks — a Windows path in a code example is likely intentional) |
 
-**Escalation rationale:** `has-trigger-conditions` escalates to error for hefty skills because without trigger language, agents cannot determine when to activate an orchestrated skill — this directly breaks functionality. `has-examples` and `has-behavioral-constraints` escalate only to warning because their absence degrades quality but doesn't prevent the skill from working. `has-gotchas` stays at suggestion for moderate skills because gotchas are highest-value but not structurally required.
+**Escalation rationale:** `has-trigger-conditions` escalates to error for hefty skills because without trigger language, agents cannot determine when to activate an orchestrated skill — this directly breaks functionality. `has-examples` and
+`has-behavioral-constraints` escalate only to warning because their absence degrades quality but doesn't prevent the skill from working. `has-gotchas` stays at suggestion for moderate skills because gotchas are highest-value but not structurally
+required.
 
 ### Positive reinforcement (info tier)
 
 These fire when good practices are present. Each checks for the structural pattern with substantive content beneath it (not just an empty heading):
 
-| Check | Details |
-|-------|---------|
-| `has-gotchas-section` | Heading with gotcha/caveat/pitfall keyword AND at least one list item or paragraph beneath it. |
-| `has-validation-loop` | Checklist patterns or "validate" + "run" in proximity with substantive content. |
-| `has-progressive-disclosure` | SKILL.md references files in subdirectories. |
-| `has-concrete-examples` | Fenced code blocks present near example headings with substantive content. |
+| Check                        | Details                                                                                        |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| `has-gotchas-section`        | Heading with gotcha/caveat/pitfall keyword AND at least one list item or paragraph beneath it. |
+| `has-validation-loop`        | Checklist patterns or "validate" + "run" in proximity with substantive content.                |
+| `has-progressive-disclosure` | SKILL.md references files in subdirectories.                                                   |
+| `has-concrete-examples`      | Fenced code blocks present near example headings with substantive content.                     |
 
 ## Pass 4: References
 
-**Inputs:** AST, file inventory, sizeyness tier, subdirectory map
-**Outputs:** Reference chain validation, orphan detection
+**Inputs:** AST, file inventory, sizeyness tier, subdirectory map **Outputs:** Reference chain validation, orphan detection
 
 ### Reference chain walking
 
@@ -249,16 +248,16 @@ These fire when good practices are present. Each checks for the structural patte
 
 Symlinks in the skill directory are followed and treated as their targets. The resolved (canonical) path is what's checked against the skill root boundary. A symlink pointing outside the skill directory is treated as a broken reference.
 
-### Diagnostics
+### Pass 4 Diagnostics
 
-| Check | Base severity | Escalates? | Details |
-|-------|--------------|------------|---------|
-| `broken-reference` | Warning | Simple: warning, Moderate+: error | Referenced file doesn't exist. Base severity is warning for simple skills because simple skills may have WIP references during development. |
-| `orphaned-files` | Suggestion | Simple: suggestion, Moderate: warning, Hefty: warning | Files unreachable from markdown chain. Message: "These files aren't referenced from any markdown file in this skill. They may still be used by scripts, but the validator can't verify that." |
-| `hooks-script-missing` | Error | No, always error | `hooks` frontmatter references a script that doesn't exist |
-| `circular-reference` | Info | No | "Circular reference detected: A.md → B.md → A.md. All files are reachable but this may indicate confusing documentation structure." |
-| `hop-limit-reached` | Info | No | "Reference chain exceeded {limit} hops. Deeper references were not followed. Consider simplifying the documentation structure." |
-| `path-traversal-blocked` | Warning | No | "Reference `{path}` resolves outside the skill directory and was not followed." |
+| Check                    | Base severity | Escalates?                                            | Details                                                                      |
+| ------------------------ | ------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `broken-reference`       | Warning       | Simple: warning, Moderate+: error                     | Referenced file missing. Warning for simple (WIP references ok)              |
+| `orphaned-files`         | Suggestion    | Simple: suggestion, Moderate: warning, Hefty: warning | Files unreachable from markdown chain, may be used by scripts              |
+| `hooks-script-missing`   | Error         | No, always error                                      | `hooks` frontmatter references missing script                                |
+| `circular-reference`     | Info          | No                                                    | Cycle detected (A→B→A). All reachable, may indicate confusing structure.    |
+| `hop-limit-reached`      | Info          | No                                                    | Chain exceeds hop limit. Consider simplifying documentation structure.       |
+| `path-traversal-blocked` | Warning       | No                                                    | Reference resolves outside skill directory, not followed.                    |
 
 ### Exclusions from orphan detection
 
@@ -266,50 +265,53 @@ Conventional files are excluded by default: `LICENSE*`, `CHANGELOG*`, `README*` 
 
 ## Pass 5: Security (optional)
 
-**Inputs:** File inventory (scripts from pass 2), AST (embedded code blocks)
-**Outputs:** Script security diagnostics
+**Inputs:** File inventory (scripts from pass 2), AST (embedded code blocks) **Outputs:** Script security diagnostics
 
 ### When semgrep is available
 
 1. Detect `semgrep` on PATH (or configured path).
-2. **Batch all targets for a single semgrep invocation:** collect all script files from the file inventory, plus temp files for embedded code blocks (see below). Invoke semgrep once with the full list of paths. Map findings back to skills by path prefix.
-3. **Embedded code block extraction:** extract fenced code blocks with language tags from the AST, write each to a temp file using the `tempfile` crate (mode 0o600, user read/write only). Clean up temp files via RAII drop guards — cleanup happens even if semgrep crashes.
-4. **Semgrep invocation:** use `std::process::Command` with explicit argument arrays (never shell interpolation). Parse semgrep `--json` output. If semgrep exits non-zero or produces malformed JSON, emit a `semgrep-execution-failed` diagnostic (Warning) and continue — do not propagate the failure as a pipeline error.
+2. **Batch all targets for a single semgrep invocation:** collect all script files from the file inventory, plus temp files for embedded code blocks (see below). Invoke semgrep once with the full list of paths. Map findings back to skills by path
+   prefix.
+3. **Embedded code block extraction:** extract fenced code blocks with language tags from the AST, write each to a temp file using the `tempfile` crate (mode 0o600, user read/write only). Clean up temp files via RAII drop guards — cleanup happens
+   even if semgrep crashes.
+4. **Semgrep invocation:** use `std::process::Command` with explicit argument arrays (never shell interpolation). Parse semgrep `--json` output. If semgrep exits non-zero or produces malformed JSON, emit a `semgrep-execution-failed` diagnostic
+   (Warning) and continue — do not propagate the failure as a pipeline error.
 5. Detect remote execution patterns in the AST (e.g., `curl | bash`). These are heuristic pattern matches, not semgrep rules.
-6. **Parallelism note:** Pass 5 should run **outside** the rayon parallel iterator used for per-skill validation. Collect all script targets across skills first, then batch into a single semgrep invocation. This avoids spawning N concurrent semgrep processes.
+6. **Parallelism note:** Pass 5 should run **outside** the rayon parallel iterator used for per-skill validation. Collect all script targets across skills first, then batch into a single semgrep invocation. This avoids spawning N concurrent semgrep
+   processes.
 
 ### Bundled semgrep rules
 
 Shipped as YAML, embedded at compile time:
 
-| Rule | Languages | What it catches |
-|------|-----------|-----------------|
-| `shell-injection` | Bash, sh | `eval`, backtick execution, `curl \| bash`, unsanitized variable expansion |
-| `python-exec` | Python | `eval()`, `exec()`, `subprocess.call(shell=True)`, `os.system()` |
-| `env-exfiltration` | All | Environment variables sent to network destinations |
-| `hardcoded-urls` | All | URLs/IPs that aren't localhost or well-known documentation sites |
-| `filesystem-escape` | All | `../` traversal patterns, absolute paths outside skill directory |
+| Rule                | Languages | What it catches                                                            |
+| ------------------- | --------- | -------------------------------------------------------------------------- |
+| `shell-injection`   | Bash, sh  | `eval`, backtick execution, `curl \| bash`, unsanitized variable expansion |
+| `python-exec`       | Python    | `eval()`, `exec()`, `subprocess.call(shell=True)`, `os.system()`           |
+| `env-exfiltration`  | All       | Environment variables sent to network destinations                         |
+| `hardcoded-urls`    | All       | URLs/IPs that aren't localhost or well-known documentation sites           |
+| `filesystem-escape` | All       | `../` traversal patterns, absolute paths outside skill directory           |
 
 Semgrep severity mapping:
 
-| Semgrep | Ours |
-|---------|------|
-| ERROR | Error |
-| WARNING | Warning |
-| INFO | Suggestion |
+| Semgrep | Ours       |
+| ------- | ---------- |
+| ERROR   | Error      |
+| WARNING | Warning    |
+| INFO    | Suggestion |
 
 ### When semgrep is NOT available
 
-| Check | Severity | Details |
-|-------|----------|---------|
-| `scripts-detected-no-semgrep` | Suggestion | "This skill contains script files ({list}). Install semgrep for automated security analysis." |
-| `script-detected` | Info | Per-script: "Script `{path}` detected ({language}). Use appropriate linters and security tooling to verify." |
+| Check                         | Severity   | Details                                                                                                      |
+| ----------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------ |
+| `scripts-detected-no-semgrep` | Suggestion | "This skill contains script files ({list}). Install semgrep for automated security analysis."                |
+| `script-detected`             | Info       | Per-script: "Script `{path}` detected ({language}). Use appropriate linters and security tooling to verify." |
 
 ### Remote execution detection
 
-| Check | Severity | Details |
-|-------|----------|---------|
-| `remote-execution-pattern` | Warning | "Skill may direct execution of remote code (`{pattern}`). This can't be verified by the validator." |
+| Check                      | Severity | Details                                                                                             |
+| -------------------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| `remote-execution-pattern` | Warning  | "Skill may direct execution of remote code (`{pattern}`). This can't be verified by the validator." |
 
 Detected via heuristic pattern matching in the AST — not a guarantee, just a signal.
 
@@ -317,10 +319,12 @@ Detected via heuristic pattern matching in the AST — not a guarantee, just a s
 
 ### Human output (default)
 
-Grouped by pass, with severity-appropriate formatting. Warm, friendly, encouraging tone. Positive reinforcement for good practices, gentle nudges for improvements, clear errors for real problems. Each warning/error includes a documentation link where applicable.
+Grouped by pass, with severity-appropriate formatting. Warm, friendly, encouraging tone. Positive reinforcement for good practices, gentle nudges for improvements, clear errors for real problems. Each warning/error includes a documentation link where
+applicable.
 
 Example:
-```
+
+```text
 📁 my-skill/ (moderate — 4 files, 1 subdirectory)
 
   ✅ Skill includes a gotchas section with concrete content — that's one of
@@ -400,6 +404,7 @@ This design is a **semver-breaking change** (0.1.x → 0.2.0). Changes that affe
 ### Severity demotions
 
 These checks now exit 0 where they previously exited 1 (without `--strict`):
+
 - `unknown-field`: error → warning
 - `body-length`: warning → suggestion
 - `windows-paths`: warning → suggestion
@@ -414,16 +419,16 @@ Existing check names change. Check names are a typed `pub enum CheckName` with k
 
 ### New flags
 
-| Flag | Purpose |
-|------|---------|
-| `--strict` | Promote warnings and suggestions to errors (exit 1) |
+| Flag                    | Purpose                                                                                                     |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `--strict`              | Promote warnings and suggestions to errors (exit 1)                                                         |
 | `--output-format <fmt>` | Output format: `human` (default) or `json`. Replaces `--json` which is deprecated with a migration message. |
-| `--severity <level>` | Minimum severity to display: `info` (default), `suggestion`, `warning`, `error` |
+| `--severity <level>`    | Minimum severity to display: `info` (default), `suggestion`, `warning`, `error`                             |
 
 ### New subcommand
 
-| Command | Purpose |
-|---------|---------|
+| Command                  | Purpose                                                                                                                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `skills-validator setup` | Generate config file at `$XDG_CONFIG_HOME/skills-validator/config.toml` with all defaults shown and commented out. Errors if config already exists, showing the file path. |
 
 ## Configuration
@@ -458,6 +463,7 @@ Generated by `skills-validator setup` with all values commented out:
 ### Config validation
 
 On load, validate all config values:
+
 - Thresholds must be positive integers
 - `moderate_file_threshold` < `hefty_file_threshold`
 - `moderate_subdir_threshold` < `hefty_subdir_threshold`
@@ -483,40 +489,40 @@ Env var naming: `SKILLS_VALIDATOR_` prefix + section + `_` + key, uppercase. Exa
 
 ### New dependencies
 
-| Crate | Purpose | Required? |
-|-------|---------|-----------|
-| `pulldown-cmark` | Markdown AST parsing | Yes |
-| `toml` | Config file parsing | Yes |
-| `tempfile` | Secure temp file creation for embedded code block scanning | Yes |
-| `dirs` | XDG config directory resolution | Already a dependency |
+| Crate            | Purpose                                                    | Required?            |
+| ---------------- | ---------------------------------------------------------- | -------------------- |
+| `pulldown-cmark` | Markdown AST parsing                                       | Yes                  |
+| `toml`           | Config file parsing                                        | Yes                  |
+| `tempfile`       | Secure temp file creation for embedded code block scanning | Yes                  |
+| `dirs`           | XDG config directory resolution                            | Already a dependency |
 
 External: `semgrep` — optional, detected at runtime.
 
 ### New files
 
-| File | Purpose |
-|------|---------|
-| `src/pipeline.rs` | Pipeline orchestration |
-| `src/passes/mod.rs` | Pass module root |
-| `src/passes/parse.rs` | Pass 1 |
-| `src/passes/structure.rs` | Pass 2 |
-| `src/passes/content.rs` | Pass 3 |
-| `src/passes/references.rs` | Pass 4 |
-| `src/passes/security.rs` | Pass 5 |
-| `src/config.rs` | Config loading, env var resolution, defaults |
-| `src/formatter.rs` | Human and JSON output formatting |
-| `rules/` | Bundled semgrep YAML rule files |
+| File                       | Purpose                                      |
+| -------------------------- | -------------------------------------------- |
+| `src/pipeline.rs`          | Pipeline orchestration                       |
+| `src/passes/mod.rs`        | Pass module root                             |
+| `src/passes/parse.rs`      | Pass 1                                       |
+| `src/passes/structure.rs`  | Pass 2                                       |
+| `src/passes/content.rs`    | Pass 3                                       |
+| `src/passes/references.rs` | Pass 4                                       |
+| `src/passes/security.rs`   | Pass 5                                       |
+| `src/config.rs`            | Config loading, env var resolution, defaults |
+| `src/formatter.rs`         | Human and JSON output formatting             |
+| `rules/`                   | Bundled semgrep YAML rule files              |
 
 ### Files that change
 
-| File | Change |
-|------|--------|
-| `src/validator.rs` | Major refactor — split into pipeline passes |
-| `src/models.rs` | Expand: `Diagnostic`, `Severity`, `Sizeyness`, `SkillContext`, `FileEntry`, config types |
-| `src/parser.rs` | Add `pulldown-cmark` AST, prose extraction, enforce `SKILL.md` exact casing |
-| `src/cli.rs` | Add `--strict`, `--severity`, `setup` subcommand, config overrides |
-| `src/scan.rs` | Wire new pipeline into scan orchestration |
-| `Cargo.toml` | Add `pulldown-cmark`, `toml` |
+| File               | Change                                                                                   |
+| ------------------ | ---------------------------------------------------------------------------------------- |
+| `src/validator.rs` | Major refactor — split into pipeline passes                                              |
+| `src/models.rs`    | Expand: `Diagnostic`, `Severity`, `Sizeyness`, `SkillContext`, `FileEntry`, config types |
+| `src/parser.rs`    | Add `pulldown-cmark` AST, prose extraction, enforce `SKILL.md` exact casing              |
+| `src/cli.rs`       | Add `--strict`, `--severity`, `setup` subcommand, config overrides                       |
+| `src/scan.rs`      | Wire new pipeline into scan orchestration                                                |
+| `Cargo.toml`       | Add `pulldown-cmark`, `toml`                                                             |
 
 ### Unchanged
 
@@ -529,16 +535,16 @@ External: `semgrep` — optional, detected at runtime.
 
 ### Migration of existing checks
 
-| Current check | Moves to | Severity change |
-|---------------|----------|-----------------|
-| `name-*` checks | Pass 3 | No change — still errors |
-| `description-length` | Pass 3 | Threshold changes to 250, stays error |
-| `unknown-field` | Pass 3 | Demoted from error to warning |
-| `extension-field` | Pass 3 | Split: compatibility suggestion + value validation |
-| `body-length` | Pass 3 | Threshold changes to 300 (configurable), becomes suggestion with escalation |
-| `windows-paths` | Pass 3 | Demoted to suggestion, AST-aware |
-| `scripts-in-root` | Pass 2 | Becomes suggestion with escalation |
-| Content keywords | Pass 3 | Word-boundary/AST-based, split into specific checks |
+| Current check        | Moves to | Severity change                                                             |
+| -------------------- | -------- | --------------------------------------------------------------------------- |
+| `name-*` checks      | Pass 3   | No change — still errors                                                    |
+| `description-length` | Pass 3   | Threshold changes to 250, stays error                                       |
+| `unknown-field`      | Pass 3   | Demoted from error to warning                                               |
+| `extension-field`    | Pass 3   | Split: compatibility suggestion + value validation                          |
+| `body-length`        | Pass 3   | Threshold changes to 300 (configurable), becomes suggestion with escalation |
+| `windows-paths`      | Pass 3   | Demoted to suggestion, AST-aware                                            |
+| `scripts-in-root`    | Pass 2   | Becomes suggestion with escalation                                          |
+| Content keywords     | Pass 3   | Word-boundary/AST-based, split into specific checks                         |
 
 ## Resolved decisions
 

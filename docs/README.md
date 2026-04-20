@@ -34,16 +34,19 @@ Complete documentation for the skills-validator project.
 
 ## Overview
 
-The skills-validator is a Rust CLI tool and library for validating agent skills according to the [Agent Skills specification](https://agentskills.io/specification).
+The skills-validator is a Rust CLI tool and library for validating agent skills according to the [Agent Skills specification](https://agentskills.io/specification). It uses a five-pass validation pipeline with configurable severity levels and automatic escalation based on skill complexity.
 
 ### Key Features
 
-- ✅ **Strict Spec Compliance** - Unknown fields cause validation failures
-- ⚠️ **Claude Code Support** - Extensions generate warnings but don't block
-- 📋 **Multiple Commands** - `validate`, `read-properties`, `to-prompt`
-- 🔧 **Rust API** - Library for custom tools
+- ✅ **Five-Pass Validation Pipeline** - Modular validation across schema, requirements, readability, performance, and security
+- 📊 **Configurable Severity Levels** - Four-tier severity model (info, suggestion, warning, error) with automatic escalation for larger skills
+- 🔍 **Multi-Directory Scanning** - Discover and validate skills across multiple locations with `scan --all`
+- 🎯 **Output Flexibility** - Human-readable and JSON output formats for CI/CD integration
+- 🔐 **Optional Security Scanning** - Semgrep integration for security vulnerability detection
+- ⚙️ **Configuration System** - TOML-based configuration for customizable validation behavior
 - 📤 **XML Generation** - Create `<available_skills>` blocks for agents
-- 🧪 **CI/CD Ready** - Exit codes and JSON output
+- 🧪 **Shell Completions** - Built-in shell completion generation for bash, zsh, and other shells
+- 🔧 **Rust Library API** - Comprehensive library for custom validation tools
 
 ### Commands
 
@@ -51,11 +54,23 @@ The skills-validator is a Rust CLI tool and library for validating agent skills 
 # Validate a skill directory
 skills-validator validate path/to/skill
 
+# Strict validation mode (all warnings treated as errors)
+skills-validator validate --strict path/to/skill
+
+# Scan multiple directories for skills
+skills-validator scan --all
+
 # Read skill properties as YAML
 skills-validator read-properties path/to/skill
 
 # Generate <available_skills> XML
 skills-validator to-prompt path/to/skill-a path/to/skill-b
+
+# Generate or update configuration file
+skills-validator setup
+
+# Generate shell completions
+skills-validator completions bash
 ```
 
 ### Exit Codes
@@ -64,6 +79,7 @@ skills-validator to-prompt path/to/skill-a path/to/skill-b
 | ---- | ------------------------------- |
 | 0    | Valid (warnings may be present) |
 | 1    | Invalid (errors present)        |
+| 2    | Scan or configuration error     |
 
 ---
 

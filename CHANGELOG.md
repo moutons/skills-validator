@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.3.0](https://github.com/moutons/skills-validator/compare/v0.2.1...v0.3.0) - 2026-04-28
+
+### Other
+
+- *(deps)* update pulldown-cmark requirement from 0.12 to 0.13
+- *(deps)* update toml requirement from 0.8 to 1.1
+- remove deprecated validator, add forbid(unsafe_code) ([#26](https://github.com/moutons/skills-validator/pull/26))
+- refresh README with crates.io install, config reference, badges ([#25](https://github.com/moutons/skills-validator/pull/25))
+- update codeql-action from v3 to v4 ([#23](https://github.com/moutons/skills-validator/pull/23))
+- update codeql-action from v3 to v4
+
 ## [0.2.1](https://github.com/moutons/skills-validator/compare/v0.2.0...v0.2.1) - 2026-04-20
 
 ### Fixed

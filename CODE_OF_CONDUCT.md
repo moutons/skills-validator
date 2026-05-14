@@ -15,7 +15,7 @@ Everyone interacting with this project — whether filing issues, submitting PRs
 
 ## Enforcement
 
-If someone is being an asshole, let the maintainer know if they don't already by emailing jlop8ib0x mozmail.com. We'll do our best to handle it. Repeated or egregious behavior gets you shown the door.
+If someone is being an asshole, let the maintainer know if they don't already by emailing jlop8ib0x@mozmail.com. We'll do our best to handle it. Repeated or egregious behavior gets you shown the door.
 
 ## Attribution
 

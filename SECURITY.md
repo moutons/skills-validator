@@ -13,5 +13,13 @@ The project is in a pre-1.0 state and only the most recent version is supported 
 
 ## Reporting a Vulnerability
 
-If you find a vulnerability, you may notify the maintainer by emailing jlop8ib0x mozmail.com or finding him on the places where you know he hangs out. That second option would probably be better. You can expect a reply within a reasonable timeframe
-given email is a tool of the spam devils in this modren world.
+Report security vulnerabilities via **private issue** (if that feature is available on this forge) or email to <jlop8ib0x@mozmail.com>. Do not use the public bug report template for security issues.
+
+When reporting, include:
+
+- Description of the vulnerability
+- Steps to reproduce
+- Affected versions or commits
+- Potential impact
+
+You will receive a response acknowledging your report. Fixes will be committed without detailed public disclosure until a patch is available.

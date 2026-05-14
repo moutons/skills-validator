@@ -1,36 +1,47 @@
-# Build outputs
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+dist/
+build/
 target/
+bin/
+out/
 *.exe
 *.dll
 *.so
 *.dylib
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-.private-journal/
-.cartographer/
-.cartographer.toml
-
 # Worktrees
 .worktrees/
 
-# OS
-.DS_Store
-Thumbs.db
+# Logs
+*.log
 
-# Environment
-.env
-.env.local
-
-# Cargo
+# --- Rust ---
 Cargo.lock
-
-# Debug
+Cargo.lock.bak
+**/*.rs.bk
 *.pdb
+tarpaulin-report.html
+lcov.info
 
-# OpenCode
+# Project-specific
+.private-journal/
+.cartographer/
+.cartographer.toml
 .opencode/
 .tmpagents/

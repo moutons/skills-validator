@@ -1,16 +1,22 @@
 gitignore: true
-
-globs:
-  - "**/*.md"
+fix: true
+noBanner: true
+noProgress: true
 
 ignores:
-  - "node_modules/"
-  - ".opencode/"
-  - "target/"
-  - "tests/fixtures/"
   - "docs/superpowers/plans/**"
+  - "docs/superpowers/specs/**"
   - "docs/specs/**"
   - "docs/plans/**"
+  - "docs/decisions/**"
+  - ".agents/skills/**"
+  - "**/node_modules/**"
+  - "**/.venv/**"
+  - "**/venv/**"
+  - "**/target/**"
+  - "**/vendor/**"
+  - ".opencode/"
+  - "tests/fixtures/"
   - ".private-journal/"
 
 config:

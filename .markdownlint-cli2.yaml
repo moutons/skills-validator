@@ -18,6 +18,7 @@ ignores:
   - ".opencode/"
   - "tests/fixtures/"
   - ".private-journal/"
+  - "CHANGELOG.md"
 
 config:
   # Disable line length limit
